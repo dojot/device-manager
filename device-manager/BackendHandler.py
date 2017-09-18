@@ -3,8 +3,13 @@
 """
 
 import json
+import logging
 import traceback
 import requests
+
+LOGGER = logging.getLogger('device-manager.' + __name__)
+LOGGER.addHandler(logging.StreamHandler())
+LOGGER.setLevel(logging.INFO)
 
 # TODO: this actually is a symptom of bad responsability management.
 # All device bookkeeping should be performed on a single (perhaps this) service, with the
@@ -152,17 +157,6 @@ class IotaHandler(BackendHandler):
         self.remove(device['id'])
         return self.create(device)
 
-        # config = self.__get_config(device)
-        # print 'will use configs \n%s' % json.dumps(config)
-        # config.pop('internal_attributes', None) # TODO add support for topic edition on iotagent
-        # try:
-        #     response = requests.put(self.baseUrl + '/devices/' + device['id'],
-        #                             headers=self._headers, data=json.dumps(config))
-        #     return response.status_code >= 200 and response.status_code < 300
-        # except requests.ConnectionError:
-        #     return False
-
-
 class OrionHandler(BackendHandler):
     """ Abstracts interaction with iotagent-json for MQTT device management """
     # TODO: this should be configurable (via file or environment variable)
@@ -300,7 +294,7 @@ class PersistenceHandler(object):
             return reply['subscribeResponse']['subscriptionId']
 
         except (requests.ConnectionError, ValueError):
-            print 'Failed to create subscription'
+            LOGGER.error('Failed to create subscription')
             return None
 
     def remove(self, subsId):
@@ -326,17 +320,18 @@ def annotate_status(device_list, orion="http://orion:1026", service='devm'):
     try:
         response = requests.post(url, headers=headers, data=query)
     except requests.ConnectionError:
-        print "Failed to retrieve status data from context broker: connection failed"
+        LOGGER.error("Failed to retrieve status data from context broker: connection failed")
         return []
 
     if response.status_code < 200 and response.status_code >= 300:
-        print "Failed to retrieve status data from context broker: %d" % response.status_code
+        LOGGER.error("Failed to retrieve status data from context broker: %d" % response.status_code)
         return []
 
 
     reply = response.json()
     if 'errorCode' in reply:
-        print "Failed to retrieve status data from context broker: %s" % reply['errorCode']['reasonPhrase']
+        LOGGER.error(
+            "Failed to retrieve status data from context broker: %s" % reply['errorCode']['reasonPhrase'])
         return []
 
     status_map = {}
@@ -350,8 +345,8 @@ def annotate_status(device_list, orion="http://orion:1026", service='devm'):
             if dev['id'] in status_map.keys():
                 dev['status'] = status_map[dev['id']]
 
-        print 'will return ' + json.dumps(device_list)
+        LOGGER.debug('will return ' + json.dumps(device_list))
         return device_list
-    except KeyError:
-        traceback.print_exc()
+    except KeyError as exception:
+        LOGGER.error(exception)
         return []

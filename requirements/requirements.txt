@@ -1,0 +1,6 @@
+flask==0.12
+requests==2.18
+gunicorn==19.6.0
+gevent==1.1.1
+pymongo==3.2.2
+json-logging-py==0.2

@@ -4,6 +4,7 @@
 """
 
 import json
+import logging
 from time import time
 from flask import request
 from flask import make_response
@@ -15,6 +16,10 @@ from BackendHandler import annotate_status
 
 device = Blueprint('device', __name__)
 db = utils.CollectionManager('device_management')
+
+LOGGER = logging.getLogger('device-manager.' + __name__)
+LOGGER.addHandler(logging.StreamHandler())
+LOGGER.setLevel(logging.INFO)
 
 def get_mongo_collection(token):
     """
@@ -70,7 +75,7 @@ def get_devices():
             cursor = collection.find({}, field_filter,
                                      limit=int(request.args['limit']))
         except (TypeError, ValueError):
-            return utils.formatResponse(400, 'limit must be an integer value')
+            return utils.formatResponse(400, 'Limit must be an integer value')
     else:
         cursor = collection.find({}, field_filter)
 
@@ -102,7 +107,7 @@ def create_device():
         except ValueError:
             return utils.formatResponse(400, 'Failed to parse payload as JSON')
     else:
-        return utils.formatResponse(400, 'unknown request format')
+        return utils.formatResponse(400, 'Unknown request format')
 
     # TODO this is awful, makes me sad, but for now also makes demoing easier
     # We might want to look into an auto-configuration feature using the service
@@ -115,7 +120,7 @@ def create_device():
             device_data['id'] = new_id
             break
     if not len(device_data['id']):
-        return utils.formatResponse(500, 'failed to generate unique id')
+        return utils.formatResponse(500, 'Failed to generate unique id')
 
     # sanity checks
     try:
@@ -128,16 +133,16 @@ def create_device():
         protocolHandler = IotaHandler(service=service)
         subsHandler = PersistenceHandler(service=service)
     except (AttributeError, KeyError):
-        return utils.formatResponse(400, 'device has missing fields')
+        return utils.formatResponse(400, 'Device has missing fields')
     except (ValueError):
-        return utils.formatResponse(304, 'missing authorization info')
+        return utils.formatResponse(304, 'Missing authorization info')
 
     # virtual devices are currently managed (i.e. created on orion) by orchestrator
     device_type = "virtual"
     if device_data['protocol'] != "virtual":
         device_type = "device"
         if not protocolHandler.create(device_data):
-            return utils.formatResponse(500, 'failed to configure device')
+            return utils.formatResponse(500, 'Failed to configure device')
 
     device_data['created'] = time()
     device_data['updated'] = time()
@@ -151,15 +156,15 @@ def get_device(deviceid):
     collection = get_mongo_collection(request.headers['authorization'])
     stored_device = collection.find_one({'id' : deviceid}, {"_id" : False, 'persistence': False})
     if stored_device is None:
-        return utils.formatResponse(404, 'given device was not found')
+        return utils.formatResponse(404, 'Given device was not found')
 
     annotated = annotate_status([stored_device],
                                 service=utils.get_allowed_service(request.headers['authorization']))
     if len(annotated) > 0:
-        print 'annotation success'
+        LOGGER.debug('annotation success')
         return make_response(json.dumps(annotated[0]), 200)
     else:
-        print 'annotation failure'
+        LOGGER.debug('annotation failure')
         return make_response(json.dumps(stored_device), 200)
 
 
@@ -169,7 +174,7 @@ def remove_device(deviceid):
     # sanity check
     old_device = collection.find_one({'id': deviceid})
     if not old_device:
-        return utils.formatResponse(404, 'given device was not found')
+        return utils.formatResponse(404, 'Given device was not found')
 
     service = utils.get_allowed_service(request.headers['authorization'])
     subsHandler = PersistenceHandler(service=service)
@@ -177,7 +182,7 @@ def remove_device(deviceid):
     if old_device['protocol'] != 'virtual':
         protocolHandler = IotaHandler(service=service)
         if not protocolHandler.remove(deviceid):
-            return utils.formatResponse(500, 'failed to remove device')
+            return utils.formatResponse(500, 'Failed to remove device')
 
     subsHandler.remove(old_device['persistence'])
     collection.delete_one({'id' : deviceid})
@@ -193,7 +198,7 @@ def update_device(deviceid):
         except ValueError:
             return utils.formatResponse(400, 'Failed to parse payload as JSON')
     else:
-        return utils.formatResponse(400, 'unknown request format')
+        return utils.formatResponse(400, 'Unknown request format')
 
     if 'id' not in device_data.keys():
         device_data["id"] = deviceid
@@ -207,7 +212,7 @@ def update_device(deviceid):
 
     old_device = collection.find_one({'id': deviceid})
     if not old_device:
-        return utils.formatResponse(404, 'given device was not found')
+        return utils.formatResponse(404, 'Given device was not found')
 
     service = utils.get_allowed_service(request.headers['authorization'])
     subsHandler = PersistenceHandler(service=service)
@@ -217,15 +222,15 @@ def update_device(deviceid):
     if (old_device['protocol'] != 'virtual') and (device_data['protocol'] != 'virtual'):
         device_type = 'device'
         if not protocolHandler.update(device_data):
-            return utils.formatResponse(500, 'failed to update device configuration')
+            return utils.formatResponse(500, 'Failed to update device configuration')
     if old_device['protocol'] != device_data['protocol']:
         if old_device['protocol'] == 'virtual':
             device_type = 'device'
             if not protocolHandler.create(device_data):
-                return utils.formatResponse(500, 'failed to update device configuration (device creation)')
+                return utils.formatResponse(500, 'Failed to update device configuration (device creation)')
         elif device_data['protocol'] == 'virtual':
             if not protocolHandler.remove(device_data['id']):
-                return utils.formatResponse(500, 'failed to update device configuration (device removal)')
+                return utils.formatResponse(500, 'Failed to update device configuration (device removal)')
 
     subsHandler.remove(old_device['persistence'])
     device_data['persistence'] = subsHandler.create(device_data['id'], device_type)
@@ -243,7 +248,7 @@ def find_device():
 
     stored_device = collection.find_one(request.args, {"_id" : False, 'persistence': False})
     if stored_device is None:
-        return utils.formatResponse(404, 'given device was not found')
+        return utils.formatResponse(404, 'Given device was not found')
 
     annotated = annotate_status([stored_device],
                                 service=utils.get_allowed_service(request.headers['authorization']))
