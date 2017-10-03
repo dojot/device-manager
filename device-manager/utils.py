@@ -1,3 +1,5 @@
+# TODO remove (all have been deprecated)
+
 """ Assorted utils used throughout the service """
 
 import json
@@ -6,6 +8,7 @@ from flask import make_response
 from pymongo import MongoClient
 import base64
 
+# TODO remove
 class CollectionManager:
     def __init__(self, database, server='mongodb', port=27017):
         self.client = None
@@ -37,6 +40,7 @@ def formatResponse(status, message=None):
     return make_response(payload, status)
 
 
+# TODO remove (moved to TenancyManager)
 def decode_base64(data):
     """Decode base64, padding being optional.
 
@@ -49,7 +53,7 @@ def decode_base64(data):
         data += b'='* (4 - missing_padding)
     return base64.decodestring(data)
 
-
+# TODO remove (moved to TenancyManager)
 def get_allowed_service(token):
     """
         Parses the authorization token, returning the service to be used when

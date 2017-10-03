@@ -10,7 +10,7 @@ if [ $1 = 'start' ]; then
             exit 1
         fi
         sleep $sleep_time
-        exec gunicorn device-manager.app:app \
+        exec gunicorn device-manager.main:app \
                   --bind 0.0.0.0:5000 \
                   --reload -R \
                   --access-logfile - \
