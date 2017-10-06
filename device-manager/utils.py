@@ -1,32 +1,8 @@
-# TODO remove (all have been deprecated)
-
 """ Assorted utils used throughout the service """
 
 import json
 import random
 from flask import make_response
-from pymongo import MongoClient
-import base64
-
-# TODO remove
-class CollectionManager:
-    def __init__(self, database, server='mongodb', port=27017):
-        self.client = None
-        self.collection = None
-        self.database = database
-        self.server = server
-        self.port = port
-
-    def getDB(self):
-        if not self.client:
-            self.client = MongoClient(self.server, self.port)
-        return self.client[self.database]
-
-    def getCollection(self, collection):
-        return self.getDB()[collection]
-
-    def __call__(self, collection):
-        return self.getCollection(collection)
 
 def formatResponse(status, message=None):
     payload = None
@@ -38,42 +14,6 @@ def formatResponse(status, message=None):
         payload = json.dumps({'message': 'Request failed', 'status': status})
 
     return make_response(payload, status)
-
-
-# TODO remove (moved to TenancyManager)
-def decode_base64(data):
-    """Decode base64, padding being optional.
-
-    :param data: Base64 data as an ASCII byte string
-    :returns: The decoded byte string.
-
-    """
-    missing_padding = len(data) % 4
-    if missing_padding != 0:
-        data += b'='* (4 - missing_padding)
-    return base64.decodestring(data)
-
-# TODO remove (moved to TenancyManager)
-def get_allowed_service(token):
-    """
-        Parses the authorization token, returning the service to be used when
-        configuring the FIWARE backend
-
-        :param token: JWT token to be parsed
-        :returns: Fiware-service to be used on API calls
-        :raises ValueError: for invalid token received
-    """
-    if not token or len(token) == 0:
-        raise ValueError("Invalid authentication token")
-
-    payload = token.split('.')[1]
-    try:
-        data = json.loads(decode_base64(payload))
-        return data['service']
-    except Exception as ex:
-        raise ValueError("Invalid authentication token payload - not json object", ex)
-
-    return None
 
 def create_id():
     """ Generates a random hex id for managed entities """
