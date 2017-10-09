@@ -1,7 +1,8 @@
 from datetime import datetime
-
+import sqlalchemy
 from flask_sqlalchemy import SQLAlchemy
 from app import app
+from utils import HTTPRequestError
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres@postgres/dojot_devm'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -15,7 +16,7 @@ class DeviceTemplate(db.Model):
     created = db.Column(db.DateTime, default=datetime.now)
     updated = db.Column(db.DateTime, onupdate=datetime.now)
 
-    attrs = db.relationship("DeviceAttr", back_populates="template", lazy='joined')
+    attrs = db.relationship("DeviceAttr", back_populates="template", lazy='joined', cascade="delete")
 
     def __repr__(self):
         return "<Template(label='%s')>" % self.label
@@ -58,3 +59,16 @@ class Device(db.Model):
     def __repr__(self):
         return "<Device(label='%s', template='%s', protocol='%s')>" % (
             self.label, self.template, self.protocol)
+
+
+def assert_device_exists(device_id):
+    try:
+        return Device.query.filter_by(device_id=device_id).one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise HTTPRequestError(404, "No such device: %s" % device_id)
+
+def assert_template_exists(template_id):
+    try:
+        return DeviceTemplate.query.filter_by(id=template_id).one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        raise HTTPRequestError(404, "No such template: %s" % template_id)

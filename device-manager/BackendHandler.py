@@ -7,6 +7,8 @@ import logging
 import traceback
 import requests
 
+from utils import HTTPRequestError
+
 LOGGER = logging.getLogger('device-manager.' + __name__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.INFO)
@@ -26,7 +28,8 @@ class BackendHandler(object):
         """
             Creates the given device on the implemented backend.
             :param device: Dictionary with the full device configuration
-            :returns: True if operation succeeded, false otherwise
+            :returns: True if operation succeeded
+            :raises HTTPRequestError
         """
         raise NotImplementedError('Abstract method called')
 
@@ -34,7 +37,7 @@ class BackendHandler(object):
         """
             Removes the device identified by the given id
             :param device_id: unique identifier of the device to be removed
-            :returns: True if operation succeeded, false otherwise
+            :raises HTTPRequestError
         """
         raise NotImplementedError('Abstract method called')
 
@@ -44,7 +47,7 @@ class BackendHandler(object):
             :param device: Dictionary with the full device configuration. Must contain an 'id'
                            field with the unique identifier of the device to be updated. That
                            field must not be changed.
-            :returns: True if operation succeeded, false otherwise
+            :raises HTTPRequestError
         """
         raise NotImplementedError('Abstract method called')
 
@@ -132,28 +135,34 @@ class IotaHandler(BackendHandler):
             response = requests.post(self.baseUrl + '/services', headers=self._headers, data=svc)
             if not (response.status_code == 409 or
                     (response.status_code >= 200 and response.status_code < 300)):
-                return False
+                error = "Failed to configure ingestion subsystem: service creation failed"
+                raise HTTPRequestError(500, error)
         except requests.ConnectionError:
-            return False
+            raise HTTPRequestError(500, "Cannot reach ingestion subsystem (service)")
 
         try:
             response = requests.post(self.baseUrl + '/devices', headers=self._headers,
                                      data=json.dumps({'devices':[self.__get_config(device)]}))
-            return response.status_code >= 200 and response.status_code < 300
+            if not (response.status_code >= 200 and response.status_code < 300):
+                error = "Failed to configure ingestion subsystem: device creation failed"
+                raise HTTPRequestError(500, error)
         except requests.ConnectionError:
-            return False
+            raise HTTPRequestError(500, "Cannot reach ingestion subsystem (device)")
 
     def remove(self, deviceid):
         """ Returns boolean indicating device removal success. """
 
         try:
-            response = requests.delete(self.baseUrl + '/devices/' + deviceid, headers=self._noBodyHeaders)
+            response = requests.delete(self.baseUrl + '/devices/' + deviceid,
+                                       headers=self._noBodyHeaders)
             if response.status_code >= 200 and response.status_code < 300:
-                response = requests.delete('%s/%s' % (self.orionUrl, deviceid), headers=self._noBodyHeaders)
-                if response.status_code >= 200 and response.status_code < 300:
-                    return True
+                response = requests.delete('%s/%s' % (self.orionUrl, deviceid),
+                                           headers=self._noBodyHeaders)
+                if not (response.status_code >= 200 and response.status_code < 300):
+                    error = "Failed to configure ingestion subsystem: device removal failed"
+                    raise HTTPRequestError(500, error)
         except requests.ConnectionError:
-            return False
+            raise HTTPRequestError(500, "Cannot reach ingestion subsystem")
 
     def update(self, device):
         """ Returns boolean indicating device update success. """
@@ -204,24 +213,26 @@ class PersistenceHandler(object):
             response = requests.post(self.baseUrl, headers=self._headers, data=svc)
             if not (response.status_code == 409 or
                     (response.status_code >= 200 and response.status_code < 300)):
-                return None
+                raise HTTPRequestError(500, "Failed to create subscription")
 
             # return the newly created subs
             reply = response.json()
             return reply['subscribeResponse']['subscriptionId']
-
-        except (requests.ConnectionError, ValueError):
+        except ValueError:
             LOGGER.error('Failed to create subscription')
-            return None
+            raise HTTPRequestError(500, "Failed to create subscription")
+        except requests.ConnectionError:
+            raise HTTPRequestError(500, "Broker is not reachable")
 
     def remove(self, subsId):
         """ Returns boolean indicating subscription removal success. """
 
         try:
             response = requests.delete(self.baseUrl + '/' + subsId, headers=self._noBodyHeaders)
-            return response.status_code >= 200 and response.status_code < 300
+            if not (response.status_code >= 200 and response.status_code < 300):
+                raise HTTPRequestError(500, "Failed to remove subscription")
         except requests.ConnectionError:
-            return False
+            raise HTTPRequestError(500, "Broker is not reachable")
 
 def annotate_status(device_list, orion="http://orion:1026", service='devm'):
     """ Returns the given device list with updated device status as seen on the ctx broker"""

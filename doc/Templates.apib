@@ -1,55 +1,146 @@
 # Group Templates
-
 ## Templates [/template]
-### Get the current list of templates [GET]
-Get the full list of templates with all their attributes
 
+### Get the current list of templates [GET]
+Get the full list of templates with all their associated attributes
++ Request
+  + Headers
+    Authorization: Bearer JWT
 + Response 200 (application/json)
   {
-    "templates":
-    [
+    "pagination": {
+      "has_next": false,
+      "next_page": null,
+      "page": 1,
+      "total": 1
+    },
+    "templates": [
       {
-        "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d91",
-        "name" : "sensor-08",
-        "attribute-1" : "value-1",
-        "attribute-2" : "value-2"
+        "attrs": [
+          {
+            "created": "2017-10-09T18:58:06.560734+00:00",
+            "id": 1,
+            "label": "attr.a",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "string"
+          },
+          {
+            "created": "2017-10-09T18:58:06.562147+00:00",
+            "id": 2,
+            "label": "attr.b",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "string"
+          }
+        ],
+        "created": "2017-10-09T18:58:06.558058+00:00",
+        "id": 1,
+        "label": "test_template"
       },
       {
-        "id" : "ffebd960-64b5-4af8-be5d-19be0cc526ac",
-        "name" : "temp-01",
-        "temperature" : "29C"
+        "attrs": [
+          {
+            "created": "2017-10-09T18:58:08.587078+00:00",
+            "id": 5,
+            "label": "attr.a",
+            "template_id": "3",
+            "type": "dynamic",
+            "value_type": "string"
+          },
+          {
+            "created": "2017-10-09T18:58:08.587522+00:00",
+            "id": 6,
+            "label": "attr.b",
+            "template_id": "3",
+            "type": "dynamic",
+            "value_type": "string"
+          }
+        ],
+        "created": "2017-10-09T18:58:08.586395+00:00",
+        "id": 3,
+        "label": "test_template"
       },
       {
-        "id" : "ffebd960-64b5-4af8-be5d-19be0cc526ac",
-        "name" : "temp-02",
-        "temperature" : "20C"
+        "attrs": [
+          {
+            "created": "2017-10-09T19:12:40.176937+00:00",
+            "id": 11,
+            "label": "attr.a",
+            "template_id": "4",
+            "type": "dynamic",
+            "updated": "2017-10-09T19:13:31.138364+00:00",
+            "value_type": "string"
+          },
+          {
+            "created": "2017-10-09T19:12:40.177666+00:00",
+            "id": 12,
+            "label": "attr.b",
+            "static_value": "qwer",
+            "template_id": "4",
+            "type": "meta",
+            "updated": "2017-10-09T19:13:31.138995+00:00",
+            "value_type": "mapping"
+          }
+        ],
+        "created": "2017-10-09T19:02:47.462534+00:00",
+        "id": 4,
+        "label": "test_template_upd",
+        "updated": "2017-10-09T19:12:40.175548+00:00"
       }
-    ],
-    "status" : "success"
+    ]
   }
+
 
 ### Register a new template [POST]
 Register a new template
-+ Request (application/json)
-  {
-    "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d92",
-    "name" : "sensor-09",
-    "param-1" : "value-1"
-  }
-
++ Request
+  + Headers
+    Authorization: Bearer JWT
+  + Body (application/json)
+    {
+      "label": "test_template",
+      "attrs": [
+        {"label":"attr.a","type":"dynamic","value_type":"string"},
+        {"label":"attr.b","type":"dynamic","value_type":"string"}
+      ]
+    }
 + Response 200 (application/json)
   {
-    "status" : "success"
+  "result": "ok",
+  "template": {
+    "attrs": [
+      {
+        "created": "2017-10-09T19:02:47.463580+00:00",
+        "id": 7,
+        "label": "attr.a",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "string"
+      },
+      {
+        "created": "2017-10-09T19:02:47.464119+00:00",
+        "id": 8,
+        "label": "attr.b",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "string"
+      }
+    ],
+    "created": "2017-10-09T19:02:47.462534+00:00",
+    "id": 4,
+    "label": "test_template"
   }
+}
 + Response 400 (application/json)
   {
-    "status" : "template already registered"
+    "errors": {
+        "label": [
+            "Missing data for required field."
+        ]
+    },
+    "message": "failed to parse input"
   }
-+ Response 400 (application/json)
-  {
-    "status" : "missing template id"
-  }
-
 
 ## Template info [/template/{id}]
 Access a specific template
@@ -61,101 +152,101 @@ Access a specific template
 Removes a template
 + Response 200 (application/json)
   {
-    "status" : "success"
+    "removed": {
+      "attrs": [
+        {
+          "created": "2017-10-09T18:58:07.681866+00:00",
+          "id": 3,
+          "label": "attr.a",
+          "template_id": "2",
+          "type": "dynamic",
+          "value_type": "string"
+        },
+        {
+          "created": "2017-10-09T18:58:07.682231+00:00",
+          "id": 4,
+          "label": "attr.b",
+          "template_id": "2",
+          "type": "dynamic",
+          "value_type": "string"
+        }
+      ],
+      "created": "2017-10-09T18:58:07.681183+00:00",
+      "id": 2,
+      "label": "test_template"
+    },
+    "result": "ok"
   }
-+ Response 400 (application/json)
++ Response 404 (application/json)
   {
-    "status" : "template not registered"
+    "message": "No such template: 123",
+    "status": 404
   }
 
 ### Get template info [GET]
 Retrieves all information from a specific template
 + Response 200 (application/json)
   {
-    "name" : "sensor-08",
-    "attribute-1" : "value-1",
-    "attribute-2" : "value-2"
-  }
-+ Response 400 (application/json)
+  "attrs": [
+    {
+      "created": "2017-10-09T18:58:06.560734+00:00",
+      "id": 1,
+      "label": "attr.a",
+      "template_id": "1",
+      "type": "dynamic",
+      "value_type": "string"
+    },
+    {
+      "created": "2017-10-09T18:58:06.562147+00:00",
+      "id": 2,
+      "label": "attr.b",
+      "template_id": "1",
+      "type": "dynamic",
+      "value_type": "string"
+    }
+  ],
+  "created": "2017-10-09T18:58:06.558058+00:00",
+  "id": 1,
+  "label": "test_template"
+}
++ Response 404 (application/json)
   {
-    "status" : "template not registered"
+    "message": "No such template: 123",
+    "status": 404
   }
-
 ### Update template info [PUT]
 Replaces all attributes from a specific template
 + Response 200 (application/json)
   {
-    "name" : "new-name",
-    "new-attribute-1" : "new-value-1"
-  }
-+ Response 400 (application/json)
-  {
-    "status" : "template not registered"
-  }
-
-## Device icon [/template/{id}/icon]
-Retrieve an icon associated with a particular template
-+ parameters
-  + id: (required, string) - The template ID
-
-### Retrieve an icon [GET]
-+ Response 200 (image/svg+xml)
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <g transform="translate(0,-1004.3622)">
-  <g transform="translate(-15,-0.99998262)" style="opacity:0.5">
-  <path d="m 21 1027.36 0 14 21 0 0 -7 -1 -6 -8 0 -1 -2 -10 0 c -0.5 0 -1 0.5 -1 1 z" style="fill:#5d4037;fill-opacity:1;stroke:none"/>
-  <path d="m 22 22 c -0.5 0 -1 0.5 -1 1 l 0 1 c 0 -0.5 0.5 -1 1 -1 l 9 0 1 2 9 0 1 6 0 -1 -1 -6 -8 0 -1 -2 z" transform="translate(0,1004.3622)" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-  <rect width="10" height="4" x="23" y="1029.36" style="fill:#fffdf0;fill-opacity:1;stroke:none"/>
-  <path d="m 42 1029.36 0 14 -21 0 0 -13 10 0 1 -2 9 0 c 0.5 0 1 0.5 1 1 z" style="fill:#8d6e63;fill-opacity:1;stroke:none"/>
-  <path d="m 21 1042.36 0 1 21 0 0 -1 z" style="fill:#000;opacity:0.15;fill-opacity:1;stroke:none"/>
-  <path d="m 32 24 -1 2 -10 0 0 1 11 0 1 -2 8 0 c 0.5 0 1 0.5 1 1 l 0 -1 c 0 -0.5 -0.5 -1 -1 -1 z" transform="translate(0,1004.3622)" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-  </g>
-  <path d="m 21 1013.36 0 14 21 0 0 -7 -1 -6 -8 0 -1 -2 -10 0 c -0.5 0 -1 0.5 -1 1 z" style="fill:#5d4037;fill-opacity:1;stroke:none"/>
-  <path d="m 22 1012.36 c -0.5 0 -1 0.5 -1 1 l 0 1 c 0 -0.5 0.5 -1 1 -1 l 9 0 1 2 9 0 1 6 0 -1 -1 -6 -8 0 -1 -2 z" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-  <rect width="10" height="4" x="23" y="1015.36" style="fill:#fffdf0;fill-opacity:1;stroke:none"/>
-  <path d="m 42 1015.36 0 14 -21 0 0 -13 10 0 1 -2 9 0 c 0.5 0 1 0.5 1 1 z" style="fill:#8d6e63;fill-opacity:1;stroke:none"/>
-  <path d="m 21 1028.36 0 1 21 0 0 -1 z" style="fill:#000;opacity:0.15;fill-opacity:1;stroke:none"/>
-  <path d="m 32 1014.36 -1 2 -10 0 0 1 11 0 1 -2 8 0 c 0.5 0 1 0.5 1 1 l 0 -1 c 0 -0.5 -0.5 -1 -1 -1 z" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-  <path d="m 42 1030.36 -8 0 0 -8 -4 0 0 8 -8 0 0 4 8 0 0 8 4 0 0 -8 8 0 z" style="fill:#4caf50;fill-opacity:1"/>
-  </g>
-  </svg>
-+ Response 400 (application/json)
-  {
-    "status" : "device not registered"
-  }
-
-### Remove an icon [DELETE]
-  + Response 200
-    {
-      "status" : "success"
+    "result": "ok",
+    "updated": {
+      "attrs": [
+        {
+          "created": "2017-10-09T19:12:40.176937+00:00",
+          "id": 11,
+          "label": "attr.a",
+          "template_id": "4",
+          "type": "dynamic",
+          "value_type": "string"
+        },
+        {
+          "created": "2017-10-09T19:12:40.177666+00:00",
+          "id": 12,
+          "label": "attr.b",
+          "static_value": "asdf",
+          "template_id": "4",
+          "type": "meta",
+          "value_type": "mapping"
+        }
+      ],
+      "created": "2017-10-09T19:02:47.462534+00:00",
+      "id": 4,
+      "label": "test_template_upd",
+      "updated": "2017-10-09T19:12:40.175548+00:00"
     }
-
-
-### Update an icon [POST]
-Uploads a new icon for the device
-  + Request (multipart/form-data; boundary=---BOUNDARY)
-    -----BOUNDARY
-    Content-Disposition: form-data; name="icon"; filename="icon.svg"
-    Content-Type: image/svg+xml
-    Content-Transfer-Encoding: QUOTED-PRINTABLE
-
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-    <g transform="translate(0,-1004.3622)">
-    <g transform="translate(-15,-0.99998262)" style="opacity:0.5">
-    <path d="m 21 1027.36 0 14 21 0 0 -7 -1 -6 -8 0 -1 -2 -10 0 c -0.5 0 -1 0.5 -1 1 z" style="fill:#5d4037;fill-opacity:1;stroke:none"/>
-    <path d="m 22 22 c -0.5 0 -1 0.5 -1 1 l 0 1 c 0 -0.5 0.5 -1 1 -1 l 9 0 1 2 9 0 1 6 0 -1 -1 -6 -8 0 -1 -2 z" transform="translate(0,1004.3622)" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-    <rect width="10" height="4" x="23" y="1029.36" style="fill:#fffdf0;fill-opacity:1;stroke:none"/>
-    <path d="m 42 1029.36 0 14 -21 0 0 -13 10 0 1 -2 9 0 c 0.5 0 1 0.5 1 1 z" style="fill:#8d6e63;fill-opacity:1;stroke:none"/>
-    <path d="m 21 1042.36 0 1 21 0 0 -1 z" style="fill:#000;opacity:0.15;fill-opacity:1;stroke:none"/>
-    <path d="m 32 24 -1 2 -10 0 0 1 11 0 1 -2 8 0 c 0.5 0 1 0.5 1 1 l 0 -1 c 0 -0.5 -0.5 -1 -1 -1 z" transform="translate(0,1004.3622)" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-    </g>
-    <path d="m 21 1013.36 0 14 21 0 0 -7 -1 -6 -8 0 -1 -2 -10 0 c -0.5 0 -1 0.5 -1 1 z" style="fill:#5d4037;fill-opacity:1;stroke:none"/>
-    <path d="m 22 1012.36 c -0.5 0 -1 0.5 -1 1 l 0 1 c 0 -0.5 0.5 -1 1 -1 l 9 0 1 2 9 0 1 6 0 -1 -1 -6 -8 0 -1 -2 z" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-    <rect width="10" height="4" x="23" y="1015.36" style="fill:#fffdf0;fill-opacity:1;stroke:none"/>
-    <path d="m 42 1015.36 0 14 -21 0 0 -13 10 0 1 -2 9 0 c 0.5 0 1 0.5 1 1 z" style="fill:#8d6e63;fill-opacity:1;stroke:none"/>
-    <path d="m 21 1028.36 0 1 21 0 0 -1 z" style="fill:#000;opacity:0.15;fill-opacity:1;stroke:none"/>
-    <path d="m 32 1014.36 -1 2 -10 0 0 1 11 0 1 -2 8 0 c 0.5 0 1 0.5 1 1 l 0 -1 c 0 -0.5 -0.5 -1 -1 -1 z" style="fill:#000;opacity:0.03;fill-opacity:1;stroke:none"/>
-    <path d="m 42 1030.36 -8 0 0 -8 -4 0 0 8 -8 0 0 4 8 0 0 8 4 0 0 -8 8 0 z" style="fill:#4caf50;fill-opacity:1"/>
-    </g>
-    </svg>
-    -----BOUNDARY
+  }
++ Response 404 (application/json)
+  {
+    "message": "No such template: 123",
+    "status": 404
+  }

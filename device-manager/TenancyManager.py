@@ -1,6 +1,7 @@
 import base64
 import json
 from sqlalchemy.sql import exists, select, text
+from utils import HTTPRequestError
 
 def decode_base64(data):
     """Decode base64, padding being optional.
@@ -60,7 +61,7 @@ def init_tenant_context(request, db):
     try:
         token = request.headers['authorization']
     except KeyError:
-        raise Exception("No authorization token has been supplied")
+        raise HTTPRequestError(401, "No authorization token has been supplied")
 
     tenant = get_allowed_service(token)
     init_tenant(tenant, db)

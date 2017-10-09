@@ -2,47 +2,91 @@
 
 ## Devices [/device]
 ### Get the current list of devices [GET]
-Get the full list of devices with all their attributes
+Get the full list of devices with all their associated attributes
 + Request
   + Headers
     Authorization: Bearer JWT
 + Response 200 (application/json)
   {
-    "devices":
-    [
-      {
-        "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d91",
-        "name" : "sensor-08",
-        "attribute-1" : "value-1",
-        "attribute-2" : "value-2",
-        "protocol" : "mqtt",
-        "created" : "1498587680.981447",
-        "updated" : "1498587680.981447",
-        "persistence" : "592890a03127c2a540335c21"
-        "status" : "online"
-      },
-      {
-        "id" : "ffebd960-64b5-4af8-be5d-19be0cc526ac",
-        "name" : "temp-01",
-        "temperature" : "29C"
-        "status" : "offline",
-        "protocol" : "mqtt",
-        "created" : "1498587680.981447",
-        "updated" : "1498587680.981447",
-        "persistence" : "592890a03127c2a540335c30"
-      },
-      {
-        "id" : "ffebd960-64b5-4af8-be5d-19be0cc526ac",
-        "name" : "temp-02",
-        "temperature" : "20C",
-        "status" : "online",
-        "protocol" : "mqtt",
-        "created" : "1498587680.981447",
-        "updated" : "1498587680.981447",
-        "persistence" : "592890a03127c2a540335c50"
-      }
-    ]
+    "devices": [
+        {
+            "attrs": [
+                {
+                    "created": "2017-10-06T10:48:15.795690+00:00",
+                    "id": 1,
+                    "label": "custom.a",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                },
+                {
+                    "created": "2017-10-06T10:48:15.797245+00:00",
+                    "id": 2,
+                    "label": "custom.b",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                },
+                {
+                    "created": "2017-10-06T10:48:15.797639+00:00",
+                    "id": 3,
+                    "label": "custom.c",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                }
+            ],
+            "created": "2017-10-06T10:48:15.798365+00:00",
+            "device_id": "0425",
+            "frequency": 2000,
+            "label": "test-device",
+            "protocol": "MQTT",
+            "template": 1
+        },
+        {
+            "attrs": [
+                {
+                    "created": "2017-10-06T10:48:15.795690+00:00",
+                    "id": 1,
+                    "label": "custom.a",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                },
+                {
+                    "created": "2017-10-06T10:48:15.797245+00:00",
+                    "id": 2,
+                    "label": "custom.b",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                },
+                {
+                    "created": "2017-10-06T10:48:15.797639+00:00",
+                    "id": 3,
+                    "label": "custom.c",
+                    "template_id": "1",
+                    "type": "dynamic",
+                    "value_type": "string"
+                }
+            ],
+            "created": "2017-10-06T10:48:18.220313+00:00",
+            "device_id": "6888",
+            "frequency": 2000,
+            "label": "test-device",
+            "protocol": "MQTT",
+            "template": 1,
+            "updated": "2017-10-06T11:00:49.127223+00:00"
+        }
+    ],
+    "pagination": {
+        "has_next": false,
+        "next_page": null,
+        "page": 1,
+        "total": 1
+    }
   }
+
 
 ### Register a new device [POST]
 Register a new device
@@ -50,55 +94,67 @@ Register a new device
   + Headers
     Authorization: Bearer JWT
   + Body
-  {
-    "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d92",
-    "name" : "sensor-09",
-    "param-1" : "value-1",
-    "protocol" : "mqtt"
-  }
-
+    {
+      "label": "test-device",
+      "protocol": "MQTT",
+      "attrs": [
+          {"label": "custom.a", "type": "dynamic", "value_type": "string"},
+          {"label": "custom.b", "type": "dynamic", "value_type": "string"},
+          {"label": "custom.c", "type": "dynamic", "value_type": "string"}
+      ]
+    }
 + Response 200 (application/json)
   {
-    "status" : "device created",
-    "device" : {
-      "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d92",
-      "name" : "sensor-09",
-      "param-1" : "value-1",
-      "protocol" : "mqtt",
-      "status" : "warm-up",
-      "created" : "1498587680.981447",
-      "updated" : "1498587680.981447",
-      "persistence" : "592890a03127c2a540335c10"
-    }
+    "device": {
+      "protocol": "MQTT",
+      "created": "2017-10-06T10:48:18.220313+00:00",
+      "label": "test-device",
+      "frequency": 2000,
+      "attrs": [
+        {
+          "template_id": "2",
+          "created": "2017-10-06T10:48:18.220972+00:00",
+          "label": "custom.a",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 4
+        },
+        {
+          "template_id": "2",
+          "created": "2017-10-06T10:48:18.221577+00:00",
+          "label": "custom.b",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 5
+        },
+        {
+          "template_id": "2",
+          "created": "2017-10-06T10:48:18.221989+00:00",
+          "label": "custom.c",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 6
+        }
+      ],
+      "template": 2,
+      "device_id": "6888"
+    },
+    "message": "device created"
   }
 + Response 400 (application/json)
-  {
-    "status" : "Faied to parse payload as JSON"
-  }
+  {"status" : "Faied to parse payload as JSON"}
 + Response 400 (application/json)
-  {
-    "status" : "unknown request format"
-  }
+  {"status" : "unknown request format"}
 + Response 400 (application/json)
-  {
-    "status" : "missing protocol"
-  }
+  {"status" : "missing protocol"}
 + Response 400 (application/json)
-  {
-    "status" : "device has missing fields"
-  }
+  {"status" : "device has missing fields"}
 + Response 304 (application/json)
-  {
-    "status" : "missing authorization info"
-  }
+  {"status" : "missing authorization info"}
 + Response 500 (application/json)
-  {
-    "status" : "failed to generate unique id"
-  }
+  {"status" : "failed to generate unique id"}
 + Response 500 (application/json)
-  {
-    "status" : "failed to configure device"
-  }
+  {"status" : "failed to configure device"}
 
 
 
@@ -107,17 +163,6 @@ Access a specific device
 + parameters
   + id: (required, string) - The device ID
 
-### Delete device [DELETE]
-Removes a device
-+ Response 200 (application/json)
-  {
-    "status" : "success"
-  }
-+ Response 404 (application/json)
-  {
-    "status" : "given device was not found"
-  }
-
 ### Get device info [GET]
 Retrieves all information from a specific device
 + Request
@@ -125,19 +170,92 @@ Retrieves all information from a specific device
     Authorization: Bearer JWT
 + Response 200 (application/json)
   {
-    "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d91",
-    "name" : "sensor-08",
-    "attribute-1" : "value-1",
-    "attribute-2" : "value-2",
-    "status" : "online"
-    "protocol" : "mqtt",
-    "created" : "1498587680.981447",
-    "updated" : "1498587680.981447",
-    "persistence" : "592890a03127c2a540335c50"
+    "attrs": [
+        {
+            "created": "2017-10-06T10:48:15.795690+00:00",
+            "id": 1,
+            "label": "custom.a",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "string"
+        },
+        {
+            "created": "2017-10-06T10:48:15.797245+00:00",
+            "id": 2,
+            "label": "custom.b",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "string"
+        },
+        {
+            "created": "2017-10-06T10:48:15.797639+00:00",
+            "id": 3,
+            "label": "custom.c",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "string"
+        }
+    ],
+    "created": "2017-10-06T10:48:18.220313+00:00",
+    "device_id": "6888",
+    "frequency": 2000,
+    "label": "test-device",
+    "protocol": "MQTT",
+    "template": 1,
+    "updated": "2017-10-06T11:00:49.127223+00:00"
   }
 + Response 404 (application/json)
   {
-    "status" : "given device was not found"
+      "message": "No such device: aaaa",
+      "status": 404
+  }
+
+### Delete device [DELETE]
+Removes a device
++ Response 200 (application/json)
+  {
+    "removed_device": {
+        "attrs": [
+            {
+                "created": "2017-10-06T10:48:15.795690+00:00",
+                "id": 1,
+                "label": "custom.a",
+                "template_id": "1",
+                "type": "dynamic",
+                "value_type": "string"
+            },
+            {
+                "created": "2017-10-06T10:48:15.797245+00:00",
+                "id": 2,
+                "label": "custom.b",
+                "template_id": "1",
+                "type": "dynamic",
+                "value_type": "string"
+            },
+            {
+                "created": "2017-10-06T10:48:15.797639+00:00",
+                "id": 3,
+                "label": "custom.c",
+                "template_id": "1",
+                "type": "dynamic",
+                "value_type": "string"
+            }
+        ],
+        "created": "2017-10-06T10:48:18.220313+00:00",
+        "device_id": "6888",
+        "frequency": 2000,
+        "label": "test-device",
+        "protocol": "MQTT",
+        "template": 1,
+        "updated": "2017-10-06T11:00:49.127223+00:00"
+    },
+    "result": "ok"
+  }
+
++ Response 404 (application/json)
+  {
+    "message": "No such device: aaaa",
+    "status": 404
   }
 
 ### Update device info [PUT]
@@ -146,60 +264,55 @@ Replaces all attributes from a specific device
   + Headers
     Authorization: Bearer JWT
   + Body
+    {
+      "device_id": "6888",
+      "frequency": 2000,
+      "label": "test-device",
+      "protocol": "MQTT",
+      "template": 1
+    }
++ Response 200 (application/json)
   {
-    "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d92",
-    "name" : "sensor-09",
-    "param-2" : "value-2",
-    "protocol" : "mqtt"
+    "device": {
+      "updated": "2017-10-06T11:00:49.127223+00:00",
+      "protocol": "MQTT",
+      "created": "2017-10-06T10:48:18.220313+00:00",
+      "label": "test-device",
+      "frequency": 2000,
+      "attrs": [
+        {
+          "template_id": "1",
+          "created": "2017-10-06T10:48:15.795690+00:00",
+          "label": "custom.a",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 1
+        },
+        {
+          "template_id": "1",
+          "created": "2017-10-06T10:48:15.797245+00:00",
+          "label": "custom.b",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 2
+        },
+        {
+          "template_id": "1",
+          "created": "2017-10-06T10:48:15.797639+00:00",
+          "label": "custom.c",
+          "value_type": "string",
+          "type": "dynamic",
+          "id": 3
+        }
+      ],
+      "template": 1,
+      "device_id": "6888"
+    },
+    "message": "device updated"
   }
 + Response 400 (application/json)
-  {
-    "status" : "unknown request format"
-  }
-
+  {"status" : "unknown request format"}
 + Response 404 (application/json)
-  {
-    "status" : "given device was not found"
-  }
-
+  {"status" : "given device was not found"}
 + Response 500 (application/json)
-  {
-    "status" : "failed to update device configuration"
-  }
-
-+ Response 200 (application/json)
-  {
-    "status" : "device updated",
-    "device" : {
-      "id" : "ff7e10eb-d95b-4ad2-ba3d-b3f9c2d68d92",
-      "name" : "sensor-09",
-      "param-2" : "value-2",
-      "protocol" : "mqtt",
-      "created" : "1498587680.981447",
-      "updated" : "1498588418.945318,
-      "persistence" : "592890a03127c2a540335c11"
-    }
-  }
-
-## Queries [/device/query]
-### Execute a query. The payload data can be part of a device (not necessarily the device id) [GET]
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-  + Body
-  {
-    "name" : "sensor-09"
-  }
-
-+ Response 200 (application/json)
-  {
-    "name" : "sensor-09",
-    "param-2" : "value-2",
-    "protocol" : "mqtt",
-    "created" : "1498587680.981447",
-    "updated" : "1498588418.945318,
-  }
-+ Response 404 (application/json)
-  {
-    "status" : "given device was not found"
-  }
+  {"status" : "failed to update device configuration"}
