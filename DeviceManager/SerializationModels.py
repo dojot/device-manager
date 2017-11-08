@@ -35,14 +35,14 @@ template_schema = TemplateSchema()
 template_list_schema = TemplateSchema(many=True)
 
 class DeviceSchema(Schema):
-    device_id = fields.String(dump_only=True)
+    id = fields.String(dump_only=True)
     label = fields.Str(required=True)
     created = fields.DateTime(dump_only=True)
     updated = fields.DateTime(dump_only=True)
-    template = fields.Nested(TemplateSchema, only=('id'))
-    protocol = fields.Str(required=True)
-    frequency = fields.Int()
-    topic = fields.Str(load_only=True)
+    templates = fields.Nested(TemplateSchema, only=('id'), many=True)
+    # protocol = fields.Str(required=True)
+    # frequency = fields.Int()
+    # topic = fields.Str(load_only=True)
 
     @post_dump
     def remove_null_values(self, data):

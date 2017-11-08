@@ -27,17 +27,22 @@ LOGGER.setLevel(logging.INFO)
 
 def serialize_full_device(orm_device):
     data = device_schema.dump(orm_device).data
-    data['attrs'] = attr_list_schema.dump(orm_device.template.attrs).data
+    data['attrs'] = {}
+    for template in orm_device.templates:
+        data['attrs'][template.id] = attr_list_schema.dump(template.attrs).data
     return data
 
 def auto_create_template(json_payload, new_device):
-    if ('attrs' in json_payload) and (new_device.template is None):
-        device_template = DeviceTemplate(label="device.%s template" % new_device.device_id)
+    if ('attrs' in json_payload) and (new_device.templates is None):
+        device_template = DeviceTemplate(label="device.%s template" % new_device.id)
         db.session.add(device_template)
-        new_device.template = device_template
+        new_device.templates = [device_template]
         load_attrs(json_payload['attrs'], device_template, DeviceAttr, db)
-    else:
-        raise HTTPRequestError(400, 'A device must be given a list of attrs or a template')
+
+def parse_template_list(template_list, new_device):
+    new_device.templates = []
+    for templateid in template_list:
+        new_device.templates.append(assert_template_exists(templateid))
 
 def generate_device_id():
     # TODO this is awful, makes me sad, but for now also makes demoing easier
@@ -48,7 +53,7 @@ def generate_device_id():
     while _attempts < 10 and len(generated_id) == 0:
         _attempts += 1
         new_id = create_id()
-        if Device.query.filter_by(device_id=new_id).first() is None:
+        if Device.query.filter_by(id=new_id).first() is None:
             return new_id
 
     raise HTTPRequestError(500, "Failed to generate unique device_id")
@@ -68,7 +73,7 @@ def get_devices():
         for d in page.items:
             devices.append(serialize_full_device(d))
 
-        result = {
+        result = json.dumps({
             'pagination': {
                 'page': page.page,
                 'total': page.pages,
@@ -76,7 +81,8 @@ def get_devices():
                 'next_page': page.next_num
             },
             'devices': devices
-        }
+        })
+        return make_response(result, 200)
     except HTTPRequestError as e:
         if isinstance(e.message, dict):
             return make_response(json.dumps(e.message), e.error_code)
@@ -89,19 +95,25 @@ def create_device():
     try:
         tenant = init_tenant_context(request, db)
         device_data, json_payload = parse_payload(request, device_schema)
-        device_data['device_id'] = generate_device_id()
+        device_data['id'] = generate_device_id()
+        device_data.pop('templates') # handled separatly by parse_template_list
         orm_device = Device(**device_data)
+        parse_template_list(json_payload['templates'], orm_device)
         auto_create_template(json_payload, orm_device)
 
-        protocol_handler = IotaHandler(service=tenant)
-        subscription_handler = PersistenceHandler(service=tenant)
-        # virtual devices are currently managed (i.e. created on orion) by orchestrator
-        device_type = "virtual"
-        if orm_device.protocol != "virtual":
-            device_type = "device"
-            protocol_handler.create(orm_device)
+        # TODO implement attribute conflict checking mechanism
 
-        orm_device.persistence = subscription_handler.create(orm_device.device_id, device_type)
+        # TODO revisit iotagent notification procedure
+        # protocol_handler = IotaHandler(service=tenant)
+        # device_type = "virtual"
+        # if orm_device.protocol != "virtual":
+        #     device_type = "device"
+        #     protocol_handler.create(orm_device)
+
+        # TODO revisit history management
+        # subscription_handler = PersistenceHandler(service=tenant)
+        # orm_device.persistence = subscription_handler.create(orm_device.device_id, "device")
+
         db.session.add(orm_device)
         db.session.commit()
         result = json.dumps({
@@ -149,37 +161,41 @@ def remove_device(deviceid):
 def update_device(deviceid):
     try:
         tenant = init_tenant_context(request, db)
+        old_device = assert_device_exists(deviceid)
+
         device_data, json_payload = parse_payload(request, device_schema)
+        device_data.pop('templates')
         updated_device = Device(**device_data)
-        updated_device.device_id = deviceid
+        parse_template_list(json_payload['templates'], updated_device)
+        updated_device.id = deviceid
 
         # update sanity check
         if 'attrs' in json_payload:
             error = "Attributes cannot be updated inline. Update the associated template instead."
             return format_response(400, error)
 
-        old_device = assert_device_exists(deviceid)
-        # sanity check for template (allows us to bypass subsystem rollback)
-        orm_template = assert_template_exists(updated_device.template_id)
-        updated_device.template = orm_template
+        # TODO implement attribute conflict checking mechanism
 
-        subsHandler = PersistenceHandler(service=tenant)
-        protocolHandler = IotaHandler(service=tenant)
-        device_type = 'virtual'
-        old_type = old_device.protocol
-        new_type = updated_device.protocol
-        if (old_type != 'virtual') and (new_type != 'virtual'):
-            device_type = 'device'
-            protocolHandler.update(updated_device)
-        if old_type != new_type:
-            if old_type == 'virtual':
-                device_type = 'device'
-                protocolHandler.create(updated_device)
-            elif new_type == 'virtual':
-                protocolHandler.remove(updated_device.device_id)
+        # TODO revisit iotagent notification mechanism
+        # protocolHandler = IotaHandler(service=tenant)
+        # device_type = 'virtual'
+        # old_type = old_device.protocol
+        # new_type = updated_device.protocol
+        # if (old_type != 'virtual') and (new_type != 'virtual'):
+        #     device_type = 'device'
+        #     protocolHandler.update(updated_device)
+        # if old_type != new_type:
+        #     if old_type == 'virtual':
+        #         device_type = 'device'
+        #         protocolHandler.create(updated_device)
+        #     elif new_type == 'virtual':
+        #         protocolHandler.remove(updated_device.id)
 
-        subsHandler.remove(old_device.persistence)
-        updated_device.persistence = subsHandler.create(deviceid, device_type)
+        # TODO revisit device data persistence
+        # subsHandler = PersistenceHandler(service=tenant)
+        # subsHandler.remove(old_device.persistence)
+        # updated_device.persistence = subsHandler.create(deviceid, device_type)
+
         db.session.delete(old_device)
         db.session.add(updated_device)
         db.session.commit()
@@ -187,6 +203,50 @@ def update_device(deviceid):
         result = {'message': 'device updated', 'device': serialize_full_device(updated_device)}
         return make_response(json.dumps(result))
 
+    except HTTPRequestError as e:
+        if isinstance(e.message, dict):
+            return make_response(json.dumps(e.message), e.error_code)
+        else:
+            return format_response(e.error_code, e.message)
+
+@device.route('/device/<deviceid>/template/<templateid>', methods=['POST'])
+def add_template_to_device(deviceid, templateid):
+    """ associates given template with device """
+
+    try:
+        tenant = init_tenant_context(request, db)
+        orm_device = assert_device_exists(deviceid)
+        orm_template = assert_template_exists(templateid)
+
+        # TODO check device constraints
+
+        orm_device.templates.append(orm_template)
+        db.session.commit()
+
+        result = {'message': 'device updated', 'device': serialize_full_device(orm_device)}
+        return make_response(json.dumps(result))
+    except HTTPRequestError as e:
+        if isinstance(e.message, dict):
+            return make_response(json.dumps(e.message), e.error_code)
+        else:
+            return format_response(e.error_code, e.message)
+
+
+@device.route('/device/<deviceid>/template/<templateid>', methods=['DELETE'])
+def remove_template_from_device(deviceid, templateid):
+    """ removes given template from device """
+    try:
+        tenant = init_tenant_context(request, db)
+        device = assert_device_exists(deviceid)
+        relation = assert_device_relation_exists(deviceid, templateid)
+
+        # Here (for now) there are no more validations to perform, as template removal
+        # cannot violate attribute constraints
+
+        db.session.remove(relation)
+        db.session.commit()
+        result = {'message': 'device updated', 'device': serialize_full_device(device)}
+        return make_response(json.dumps(result))
     except HTTPRequestError as e:
         if isinstance(e.message, dict):
             return make_response(json.dumps(e.message), e.error_code)
