@@ -9,8 +9,8 @@ if [ $1 = 'start' ]; then
             echo Executed $retries retries, aborting
             exit 1
         fi
-        sleep $sleep_time
-        exec gunicorn device-manager.main:app \
+        docker/waitForDb.py
+        exec gunicorn DeviceManager.main:app \
                   --bind 0.0.0.0:5000 \
                   --reload -R \
                   --access-logfile - \
@@ -21,6 +21,7 @@ if [ $1 = 'start' ]; then
             flag=1
         else
             echo "Cannot start application, retying in $sleep_time seconds..."
+            sleep $sleep_time
             let retries++
         fi
     done

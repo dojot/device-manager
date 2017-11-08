@@ -3,8 +3,9 @@ import sqlalchemy
 from flask_sqlalchemy import SQLAlchemy
 from app import app
 from utils import HTTPRequestError
+from conf import CONFIG
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres@postgres/dojot_devm'
+app.config['SQLALCHEMY_DATABASE_URI'] = CONFIG.get_db_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
