@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 import sqlalchemy
 from flask_sqlalchemy import SQLAlchemy
 from app import app
@@ -80,3 +81,8 @@ def assert_device_relation_exists(device_id, template_id):
         return DeviceTemplateMap.query.filter_by(device_id=device_id, template_id=template_id).one()
     except sqlalchemy.orm.exc.NoResultFound:
         raise HTTPRequestError(404, "Device %s is not associated with template %s" % (device_id, template_id))
+
+def handle_consistency_exception(error):
+    # message = error.message.replace('\n','')
+    message = re.sub(r"(^\(.*?\))|\n", "", error.message)
+    raise HTTPRequestError(400, message)

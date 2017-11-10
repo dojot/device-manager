@@ -4,6 +4,7 @@ import logging
 from time import time
 from flask import Flask, Blueprint, request, make_response
 from sqlalchemy.sql import text
+from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
 from SerializationModels import *
@@ -52,17 +53,22 @@ def create_template():
         loaded_template = DeviceTemplate(**tpl)
         load_attrs(json_payload['attrs'], loaded_template, DeviceAttr, db)
         db.session.add(loaded_template)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
+
         results = json.dumps({
             'template': template_schema.dump(loaded_template).data,
             'result': 'ok'
         })
         return make_response(results, 200)
-    except HTTPRequestError as e:
-        if isinstance(e.message, dict):
-            return make_response(json.dumps(e.message), e.error_code)
+    except HTTPRequestError as error:
+        if isinstance(error.message, dict):
+            return make_response(json.dumps(error.message), error.error_code)
         else:
-            return format_response(e.error_code, e.message)
+            return format_response(error.error_code, error.message)
 
 @template.route('/template/<templateid>', methods=['GET'])
 def get_template(templateid):
@@ -113,18 +119,21 @@ def update_template(templateid):
             mapped = DeviceAttr(template=old, **attr)
             db.session.add(mapped)
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
+
         results = {
             'updated': template_schema.dump(old).data,
             'result': 'ok'
         }
         return make_response(json.dumps(results), 200)
-
-    except HTTPRequestError as e:
-        if isinstance(e.message, dict):
-            return make_response(json.dumps(e.message), e.error_code)
+    except HTTPRequestError as error:
+        if isinstance(error.message, dict):
+            return make_response(json.dumps(error.message), error.error_code)
         else:
-            return format_response(e.error_code, e.message)
+            return format_response(error.error_code, error.message)
 
 
 app.register_blueprint(template)

@@ -12,6 +12,7 @@ from flask import Blueprint
 from utils import *
 from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler
 from BackendHandler import annotate_status
+from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
 from SerializationModels import *
@@ -101,8 +102,6 @@ def create_device():
         parse_template_list(json_payload['templates'], orm_device)
         auto_create_template(json_payload, orm_device)
 
-        # TODO implement attribute conflict checking mechanism
-
         # TODO revisit iotagent notification procedure
         # protocol_handler = IotaHandler(service=tenant)
         # device_type = "virtual"
@@ -115,7 +114,12 @@ def create_device():
         # orm_device.persistence = subscription_handler.create(orm_device.device_id, "device")
 
         db.session.add(orm_device)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
+
         result = json.dumps({
             'message': 'device created',
             'device': serialize_full_device(orm_device)
@@ -174,8 +178,6 @@ def update_device(deviceid):
             error = "Attributes cannot be updated inline. Update the associated template instead."
             return format_response(400, error)
 
-        # TODO implement attribute conflict checking mechanism
-
         # TODO revisit iotagent notification mechanism
         # protocolHandler = IotaHandler(service=tenant)
         # device_type = 'virtual'
@@ -198,7 +200,11 @@ def update_device(deviceid):
 
         db.session.delete(old_device)
         db.session.add(updated_device)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
 
         result = {'message': 'device updated', 'device': serialize_full_device(updated_device)}
         return make_response(json.dumps(result))
@@ -218,10 +224,12 @@ def add_template_to_device(deviceid, templateid):
         orm_device = assert_device_exists(deviceid)
         orm_template = assert_template_exists(templateid)
 
-        # TODO check device constraints
-
         orm_device.templates.append(orm_template)
-        db.session.commit()
+
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
 
         result = {'message': 'device updated', 'device': serialize_full_device(orm_device)}
         return make_response(json.dumps(result))
