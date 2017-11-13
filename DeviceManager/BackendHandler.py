@@ -11,7 +11,7 @@ from utils import HTTPRequestError
 
 LOGGER = logging.getLogger('device-manager.' + __name__)
 LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.INFO)
+LOGGER.setLevel(logging.DEBUG)
 
 # TODO: this actually is a symptom of bad responsability management.
 # All device bookkeeping should be performed on a single (perhaps this) service, with the
@@ -51,8 +51,84 @@ class BackendHandler(object):
         """
         raise NotImplementedError('Abstract method called')
 
+# KafkaHandler is the preferred handler
+class OrionHandler(BackendHandler):
 
+    def __init__(self, service='devm', baseUrl='http://orion:1026/v2/entities'):
+        self.baseUrl = baseUrl
+        self.service = service
+        self._noBodyHeaders = {
+            'Fiware-service': service,
+            'Fiware-servicePath': '/',
+            'cache-control': 'no-cache'
+        }
+        self._headers = self._noBodyHeaders
+        self._headers['Content-Type'] = 'application/json'
 
+    @staticmethod
+    def parse_device(device, generated_id=False):
+        body = {}
+        if generated_id:
+            body = {
+                "type": "device",
+                "id": device['id']
+            }
+        for tpl in device['attrs']:
+            for attr in device['attrs'][tpl]:
+                body[attr['label']] = {"type": attr['value_type']}
+
+    def create_update_device(self, device, is_update=True):
+        target_url = "%s/%s/attrs?type=device" % (self.baseUrl, device['id'])
+        body = json.dumps(OrionHandler.parse_device(device, not is_update))
+        if is_update == False:
+            target_url = self.baseUrl
+
+        try:
+            LOGGER.info("about to create device in ctx broker")
+            LOGGER.debug("%s", body)
+            response = requests.post(target_url, headers=self._headers, data=body)
+            if response.status_code >= 200 and response.status_code < 300:
+                LOGGER.debug("Broker update successful")
+            else:
+                LOGGER.info("Failed to update ctx broker: %d", response.status_code)
+                try:
+                    LOGGER.debug("%s", response.json())
+                except Exception as e:
+                    LOGGER.error(e)
+        except requests.ConnectionError:
+            raise HTTPRequestError(500, "Broker is not reachable")
+
+    def create(self, device):
+        self.create_update_device(device, False)
+
+    def remove(self, device_id):
+        # removal is ignored, thus leaving removed device data lingering in the system
+        # (this allows easier recovery/rollback of data by the user)
+        pass
+
+    def update(self, device):
+        self.create_update_device(device)
+
+class KafkaHandler(BackendHandler):
+    def create(self, device):
+        """
+            Publishes event to kafka broker, notifying device creation
+        """
+        raise NotImplementedError('')
+
+    def remove(self, device_id):
+        """
+            Publishes event to kafka broker, notifying device removal
+        """
+        raise NotImplementedError('')
+
+    def update(self, device):
+        """
+            Publishes event to kafka broker, notifying device update
+        """
+        raise NotImplementedError('')
+
+# deprecated
 class IotaHandler(BackendHandler):
     """ Abstracts interaction with iotagent-json for MQTT device management """
     # TODO: this should be configurable (via file or environment variable)
@@ -233,48 +309,3 @@ class PersistenceHandler(object):
                 raise HTTPRequestError(500, "Failed to remove subscription")
         except requests.ConnectionError:
             raise HTTPRequestError(500, "Broker is not reachable")
-
-def annotate_status(device_list, orion="http://orion:1026", service='devm'):
-    """ Returns the given device list with updated device status as seen on the ctx broker"""
-
-    url = "%s/NGSI10/queryContext" % orion
-    query = json.dumps({"entities": [{"isPattern": "true", "id": ".*"}]})
-    headers = {
-        'Content-Type': 'application/json',
-        'Fiware-service': service,
-        'Fiware-servicepath': '/'
-    }
-
-    try:
-        response = requests.post(url, headers=headers, data=query)
-    except requests.ConnectionError:
-        LOGGER.error("Failed to retrieve status data from context broker: connection failed")
-        return []
-
-    if response.status_code < 200 and response.status_code >= 300:
-        LOGGER.error("Failed to retrieve status data from context broker: %d" % response.status_code)
-        return []
-
-
-    reply = response.json()
-    if 'errorCode' in reply:
-        LOGGER.error(
-            "Failed to retrieve status data from context broker: %s" % reply['errorCode']['reasonPhrase'])
-        return []
-
-    status_map = {}
-    try:
-        for ctx in reply['contextResponses']:
-            for attr in ctx['contextElement']['attributes']:
-                if attr['name'] == 'device-status':
-                    status_map[ctx['contextElement']['id']] = attr['value']
-
-        for dev in device_list:
-            if dev['id'] in status_map.keys():
-                dev['status'] = status_map[dev['id']]
-
-        LOGGER.debug('will return ' + json.dumps(device_list))
-        return device_list
-    except KeyError as exception:
-        LOGGER.error(exception)
-        return []

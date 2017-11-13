@@ -10,7 +10,7 @@ from flask import request
 from flask import make_response
 from flask import Blueprint
 from utils import *
-from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler
+from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler, OrionHandler
 from BackendHandler import annotate_status
 from sqlalchemy.exc import IntegrityError
 
@@ -108,7 +108,6 @@ def create_device():
         # if orm_device.protocol != "virtual":
         #     device_type = "device"
         #     protocol_handler.create(orm_device)
-
         # TODO revisit history management
         # subscription_handler = PersistenceHandler(service=tenant)
         # orm_device.persistence = subscription_handler.create(orm_device.device_id, "device")
@@ -120,10 +119,17 @@ def create_device():
         except IntegrityError as error:
             handle_consistency_exception(error)
 
+        full_device = serialize_full_device(orm_device)
+
         result = json.dumps({
             'message': 'device created',
-            'device': serialize_full_device(orm_device)
+            'device': full_device
         })
+
+        # TODO remove this in favor of kafka as data broker....
+        ctx_broker_handler = OrionHandler(service=tenant)
+        ctx_broker_handler.create(full_device)
+
         return make_response(result, 200)
 
     except HTTPRequestError as e:
@@ -197,6 +203,10 @@ def update_device(deviceid):
         # subsHandler = PersistenceHandler(service=tenant)
         # subsHandler.remove(old_device.persistence)
         # updated_device.persistence = subsHandler.create(deviceid, device_type)
+
+        # TODO remove this in favor of kafka as data broker....
+        ctx_broker_handler = OrionHandler(service=tenant)
+        ctx_broker_handler.update(serialize_full_device(old_device))
 
         db.session.delete(old_device)
         db.session.add(updated_device)
