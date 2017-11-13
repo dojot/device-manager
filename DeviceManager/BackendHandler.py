@@ -77,6 +77,8 @@ class OrionHandler(BackendHandler):
             for attr in device['attrs'][tpl]:
                 body[attr['label']] = {"type": attr['value_type']}
 
+        return body
+
     def create_update_device(self, device, is_update=True):
         target_url = "%s/%s/attrs?type=device" % (self.baseUrl, device['id'])
         body = json.dumps(OrionHandler.parse_device(device, not is_update))
