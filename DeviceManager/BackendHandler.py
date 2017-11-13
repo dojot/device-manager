@@ -68,9 +68,12 @@ class OrionHandler(BackendHandler):
     @staticmethod
     def parse_device(device, generated_id=False):
         body = {}
+        type_descr = "template"
+        for type in device['attrs'].keys():
+          type_descr += "_" + str(type);
         if generated_id:
             body = {
-                "type": "device",
+                "type": type_descr,
                 "id": device['id']
             }
         for tpl in device['attrs']:
