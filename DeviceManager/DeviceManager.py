@@ -11,7 +11,6 @@ from flask import make_response
 from flask import Blueprint
 from utils import *
 from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler, OrionHandler
-from BackendHandler import annotate_status
 from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
