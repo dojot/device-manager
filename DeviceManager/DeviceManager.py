@@ -94,12 +94,50 @@ def create_device():
     """ Creates and configures the given device (in json) """
     try:
         tenant = init_tenant_context(request, db)
-        device_data, json_payload = parse_payload(request, device_schema)
-        device_data['id'] = generate_device_id()
-        device_data.pop('templates') # handled separatly by parse_template_list
-        orm_device = Device(**device_data)
-        parse_template_list(json_payload['templates'], orm_device)
-        auto_create_template(json_payload, orm_device)
+        try:
+            count = int(request.args.get('count', '1'))
+            clength = len(str(count))
+        except Exception as e:
+            LOGGER.error(e)
+            raise HTTPRequestError(400, "If provided, count must be integer")
+        result = None
+        devices = []
+        for i in range(0, count):
+            device_data, json_payload = parse_payload(request, device_schema)
+            device_data['id'] = generate_device_id()
+            device_data['label'] = device_data['label'] + "_%0*d" % (clength, i)
+            device_data.pop('templates', None) # handled separatly by parse_template_list
+            orm_device = Device(**device_data)
+            parse_template_list(json_payload.get('templates', []), orm_device)
+            auto_create_template(json_payload, orm_device)
+            db.session.add(orm_device)
+
+            devices.append({'id': device_data['id'], 'label': device_data['label']})
+
+            full_device = serialize_full_device(orm_device)
+
+            # TODO remove this in favor of kafka as data broker....
+            ctx_broker_handler = OrionHandler(service=tenant)
+            ctx_broker_handler.create(full_device)
+
+            kafka_handler = KafkaHandler()
+            kafka_handler.create(full_device, meta={"service": tenant})
+
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            handle_consistency_exception(error)
+
+        if count == 1:
+            result = json.dumps({
+                'message': 'device created',
+                'device': full_device
+            })
+        else:
+            result = json.dumps({
+                'message': 'devices created',
+                'devices': devices
+            })
 
         # TODO revisit iotagent notification procedure
         # protocol_handler = IotaHandler(service=tenant)
@@ -110,27 +148,6 @@ def create_device():
         # TODO revisit history management
         # subscription_handler = PersistenceHandler(service=tenant)
         # orm_device.persistence = subscription_handler.create(orm_device.device_id, "device")
-
-        db.session.add(orm_device)
-
-        try:
-            db.session.commit()
-        except IntegrityError as error:
-            handle_consistency_exception(error)
-
-        full_device = serialize_full_device(orm_device)
-
-        result = json.dumps({
-            'message': 'device created',
-            'device': full_device
-        })
-
-        # TODO remove this in favor of kafka as data broker....
-        ctx_broker_handler = OrionHandler(service=tenant)
-        ctx_broker_handler.create(full_device)
-        kafka_handler = KafkaHandler()
-        kafka_handler.create(full_device, meta = { "service" : tenant})
-
 
         return make_response(result, 200)
 
@@ -178,7 +195,7 @@ def update_device(deviceid):
         device_data, json_payload = parse_payload(request, device_schema)
         device_data.pop('templates')
         updated_device = Device(**device_data)
-        parse_template_list(json_payload['templates'], updated_device)
+        parse_template_list(json_payload.get('templates', []), updated_device)
         updated_device.id = deviceid
 
         # update sanity check
@@ -251,7 +268,7 @@ def configure_device(deviceid):
         else:
             return format_response(e.error_code, e.message)
 
-
+# Convenience template ops
 @device.route('/device/<deviceid>/template/<templateid>', methods=['POST'])
 def add_template_to_device(deviceid, templateid):
     """ associates given template with device """
@@ -276,7 +293,6 @@ def add_template_to_device(deviceid, templateid):
         else:
             return format_response(e.error_code, e.message)
 
-
 @device.route('/device/<deviceid>/template/<templateid>', methods=['DELETE'])
 def remove_template_from_device(deviceid, templateid):
     """ removes given template from device """
@@ -292,6 +308,38 @@ def remove_template_from_device(deviceid, templateid):
         db.session.commit()
         result = {'message': 'device updated', 'device': serialize_full_device(device)}
         return make_response(json.dumps(result))
+    except HTTPRequestError as e:
+        if isinstance(e.message, dict):
+            return make_response(json.dumps(e.message), e.error_code)
+        else:
+            return format_response(e.error_code, e.message)
+
+@device.route('/device/template/<templateid>', methods=['GET'])
+def get_by_template(templateid):
+    try:
+        init_tenant_context(request, db)
+
+        page_number, per_page = get_pagination(request)
+        page = (
+            db.session.query(Device)
+            .join(DeviceTemplateMap)
+            .filter_by(template_id=templateid)
+            .paginate(page=page_number, per_page=per_page, error_out=False)
+        )
+        devices = []
+        for d in page.items:
+            devices.append(serialize_full_device(d))
+
+        result = json.dumps({
+            'pagination': {
+                'page': page.page,
+                'total': page.pages,
+                'has_next': page.has_next,
+                'next_page': page.next_num
+            },
+            'devices': devices
+        })
+        return make_response(result, 200)
     except HTTPRequestError as e:
         if isinstance(e.message, dict):
             return make_response(json.dumps(e.message), e.error_code)

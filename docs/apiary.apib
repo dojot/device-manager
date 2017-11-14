@@ -3,16 +3,16 @@ HOST: http://localhost:8000
 
 # Device Management API
 
-Device manager is responsible for management operations (CRUD) over devices and templates. 
+Device manager is responsible for management operations (CRUD) over devices and templates.
 
-All devices are created based on a *template*, which can be thought as a model of a device. As "model" we could think of part numbers or product models - one *prototype* from which devices are created. Templates in dojot have one label (any alphanumeric sequece), a list of attributes which will hold all the device emitted information, and optionally a few special attributes which will indicate how the device communicates, including transmission methods (protocol, ports, etc.) and message formats. 
+All devices are created based on a *template*, which can be thought as a model of a device. As "model" we could think of part numbers or product models - one *prototype* from which devices are created. Templates in dojot have one label (any alphanumeric sequece), a list of attributes which will hold all the device emitted information, and optionally a few special attributes which will indicate how the device communicates, including transmission methods (protocol, ports, etc.) and message formats.
 
-In fact, templates can represent not only "device models", but it can also abstract a "class of devices". For instance, we could have one template to represent all themometers that will be used in dojot. This template would have only one attribute called, let's say, "temperature". While creating the device, the user would select its "physical template", let's say *TexasInstr882*, and the 'thermometer' template. The user would have also to add translation instructions in order to map the temperature reading that will be sent from the device to a "temperature" attribute. 
+In fact, templates can represent not only "device models", but it can also abstract a "class of devices". For instance, we could have one template to represent all themometers that will be used in dojot. This template would have only one attribute called, let's say, "temperature". While creating the device, the user would select its "physical template", let's say *TexasInstr882*, and the 'thermometer' template. The user would have also to add translation instructions in order to map the temperature reading that will be sent from the device to a "temperature" attribute.
 
 In order to create a device, a user selects which templates are going to compose this new device. All their attributes are merged together and associated to it - they are tightly linked to the original template so that any template update will reflect all associated devices.
 
 # Group Templates
-Before describing the device APIs, we must detail the template endpoints. As said before, templates are a way to describe the "device model", or, more abstractly, a "device class". These templates contains all the attributes that will be applied to the device. Always remember that they can (and eventually will) be merged into one to create a single device - they must not have attributes with the same name. If this is inevitable, a tag could be added to the attribute name and, while creating the device, translation instructions could be created in order to map each attribute from the incoming message to the appropriate device attribute. 
+Before describing the device APIs, we must detail the template endpoints. As said before, templates are a way to describe the "device model", or, more abstractly, a "device class". These templates contains all the attributes that will be applied to the device. Always remember that they can (and eventually will) be merged into one to create a single device - they must not have attributes with the same name. If this is inevitable, a tag could be added to the attribute name and, while creating the device, translation instructions could be created in order to map each attribute from the incoming message to the appropriate device attribute.
 
 ## Templates [/template]
 
@@ -205,7 +205,7 @@ Retrieves all information from a specific template
                 "id": "83af",
                 "label": "SensorModel"
             }
-    
+
 + Response 404 (application/json)
 
             {
@@ -221,7 +221,7 @@ All devices based on this template will be also updated.
 
             Authorization: Bearer JWT
 
-    + Body 
+    + Body
 
             {
                 "label": "SensorModel",
@@ -305,13 +305,83 @@ All devices based on this template will be also updated.
 
 # Group Devices
 
-All these endpoints are related to CRUD operations over devices. 
+All these endpoints are related to CRUD operations over devices.
 
 ## Devices [/device]
-### Get the current list of devices [GET]
+### Get the current list of devices [GET /device{?page_size,page_num}]
 Get the full list of devices with all their associated attributes.
-Each attribute from *attrs* is the template ID from where the attributes came from. 
+Each attribute from *attrs* is the template ID from where the attributes came from.
 In this example, there is only one template (ID 1).
++ Params
+  + page_size: 20 (integer, optional)
+  + page_num: 1 (integer, optional)
++ Request
+      + Headers
+
+            Authorization: Bearer JWT
+
++ Response 200 (application/json)
+
+            {
+                "devices": [
+                    {
+                        "attrs": {
+                            "83af": [
+                                {
+                                    "created": "2017-12-20T18:14:43.994796+00:00",
+                                    "id": 30,
+                                    "label": "tag_temperature",
+                                    "template_id": "83af",
+                                    "type": "dynamic",
+                                    "value_type": "float"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.014065+00:00",
+                                    "id": 31,
+                                    "label": "tag_pressure",
+                                    "template_id": "83af",
+                                    "type": "dynamic",
+                                    "value_type": "float"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.015474+00:00",
+                                    "id": 32,
+                                    "label": "tag_led",
+                                    "template_id": "83af",
+                                    "type": "dynamic",
+                                    "value_type": "bool"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.016804+00:00",
+                                    "id": 33,
+                                    "label": "tag_fan",
+                                    "template_id": "83af",
+                                    "type": "dynamic",
+                                    "value_type": "bool"
+                                }
+                            ]
+                        },
+                        "created": "2017-12-20T18:15:08.864677+00:00",
+                        "id": "10cf",
+                        "label": "sensor-4",
+                        "templates": [
+                            "83af"
+                        ]
+                    }
+                ],
+                "pagination": {
+                    "has_next": false,
+                    "next_page": null,
+                    "page": 1,
+                    "total": 1
+                }
+            }
+### Get the current list of devices associated with given template [GET /device/template/{templateid}{?page_size,page_num}]
+Get the full list of devices that belong to a given template..
++ Params
+  + templateid: 1 (integer, required)
+  + page_size: 20 (integer, optional)
+  + page_num: 1 (integer, optional)
 + Request
       + Headers
 
@@ -374,14 +444,15 @@ In this example, there is only one template (ID 1).
                 }
             }
 
-### Register a new device [POST]
+### Register a new device [POST /device{?count}]
 Register a new device. In this example, there is already a template (ID 1) which describes all the attributes to be applied to this device.
- - TODO: posting devices without templates is not yet working properly.
++ Parameters
+    + count: 1 (integer, optional)
 + Request (application/json)
     + Headers
 
             Authorization: Bearer JWT
-    
+
     + Body
 
             {
@@ -452,15 +523,7 @@ Register a new device. In this example, there is already a template (ID 1) which
 
 + Response 400 (application/json)
 
-            {"status" : "missing protocol"}
-
-+ Response 400 (application/json)
-
             {"status" : "device has missing fields"}
-
-+ Response 304 (application/json)
-
-            {"status" : "missing authorization info"}
 
 + Response 500 (application/json)
 
@@ -472,7 +535,7 @@ Register a new device. In this example, there is already a template (ID 1) which
 
 
 
-## Device info [/devices/{id}]
+## Device info [/device/{id}]
 Access a specific device
     + parameters
       + id: (required, string) - The device ID
@@ -484,7 +547,7 @@ Retrieves all information from a specific device
 
             Authorization: Bearer JWT
 
-+ Response 200 
++ Response 200
 
             {
                 "attrs": {
@@ -668,6 +731,3 @@ Replaces all attributes from a specific device.
 + Response 500 (application/json)
 
             {"status" : "failed to update device configuration"}
-
-
-
