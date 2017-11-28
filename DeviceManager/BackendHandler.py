@@ -9,6 +9,8 @@ import requests
 
 from utils import HTTPRequestError
 
+from KafkaNotifier import sendNotification, DeviceEvent
+
 LOGGER = logging.getLogger('device-manager.' + __name__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.DEBUG)
@@ -115,23 +117,23 @@ class OrionHandler(BackendHandler):
         self.create_update_device(device)
 
 class KafkaHandler(BackendHandler):
-    def create(self, device):
+    def create(self, device, meta):
         """
             Publishes event to kafka broker, notifying device creation
         """
-        raise NotImplementedError('')
+        sendNotification(DeviceEvent.CREATED, device, meta)
 
-    def remove(self, device_id):
+    def remove(self, device_id, meta):
         """
             Publishes event to kafka broker, notifying device removal
         """
-        raise NotImplementedError('')
+        sendNotification(DeviceEvent.REMOVED, device, meta)
 
-    def update(self, device):
+    def update(self, device, meta):
         """
             Publishes event to kafka broker, notifying device update
         """
-        raise NotImplementedError('')
+        sendNotification(DeviceEvent.UPDATE, device, meta)
 
 # deprecated
 class IotaHandler(BackendHandler):

@@ -10,7 +10,7 @@ from flask import request
 from flask import make_response
 from flask import Blueprint
 from utils import *
-from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler, OrionHandler
+from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler, OrionHandler, KafkaHandler
 from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
@@ -128,6 +128,9 @@ def create_device():
         # TODO remove this in favor of kafka as data broker....
         ctx_broker_handler = OrionHandler(service=tenant)
         ctx_broker_handler.create(full_device)
+        kafka_handler = KafkaHandler()
+        kafka_handler.create(full_device, meta = { "service" : tenant})
+
 
         return make_response(result, 200)
 
