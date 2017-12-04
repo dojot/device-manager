@@ -121,19 +121,24 @@ class KafkaHandler(BackendHandler):
         """
             Publishes event to kafka broker, notifying device creation
         """
-        sendNotification(DeviceEvent.CREATED, device, meta)
+        sendNotification(DeviceEvent.CREATE, device, meta)
 
     def remove(self, device_id, meta):
         """
             Publishes event to kafka broker, notifying device removal
         """
-        sendNotification(DeviceEvent.REMOVED, device, meta)
+        sendNotification(DeviceEvent.REMOVE, device, meta)
 
     def update(self, device, meta):
         """
             Publishes event to kafka broker, notifying device update
         """
         sendNotification(DeviceEvent.UPDATE, device, meta)
+    def configure(self, device, meta):
+        """
+            Publishes event to kafka broker, notifying device configuration
+        """
+        sendNotification(DeviceEvent.CONFIGURE, device, meta)
 
 # deprecated
 class IotaHandler(BackendHandler):

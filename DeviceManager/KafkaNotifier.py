@@ -8,9 +8,10 @@ LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.DEBUG)
 
 class DeviceEvent:
-    CREATED = "created"
-    UPDATED = "updated"
-    REMOVED = "removed"
+    CREATE = "create"
+    UPDATE = "update"
+    REMOVE = "remove"
+    CONFIGURE = "configure"
 
 class NotificationMessage:
     event = ""

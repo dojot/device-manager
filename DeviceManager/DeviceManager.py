@@ -227,6 +227,32 @@ def update_device(deviceid):
         else:
             return format_response(e.error_code, e.message)
 
+@device.route('/device/<deviceid>/attrs', methods=['PUT'])
+def configure_device(deviceid):
+    try:
+        LOGGER.info("Finding tenant context.")
+        tenant = init_tenant_context(request, db)
+        LOGGER.info("Tenant is: " + tenant)
+        old_device = assert_device_exists(deviceid)
+
+        LOGGER.info("Parsing payload...")
+        json_payload = json.loads(request.data)
+        LOGGER.info("... payload was parsed")
+        kafka_handler = KafkaHandler()
+        topic = json_payload["topic"]
+        del json_payload["topic"]
+
+        kafka_handler.configure(json_payload, meta = { "service" : tenant, "id" : deviceid, "topic": topic})
+
+        return make_response(result, 200)
+
+    except HTTPRequestError as e:
+        if isinstance(e.message, dict):
+            return make_response(json.dumps(e.message), e.error_code)
+        else:
+            return format_response(e.error_code, e.message)
+
+
 @device.route('/device/<deviceid>/template/<templateid>', methods=['POST'])
 def add_template_to_device(deviceid, templateid):
     """ associates given template with device """
