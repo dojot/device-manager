@@ -230,15 +230,13 @@ def update_device(deviceid):
 @device.route('/device/<deviceid>/attrs', methods=['PUT'])
 def configure_device(deviceid):
     try:
-        LOGGER.info("Finding tenant context.")
         tenant = init_tenant_context(request, db)
-        LOGGER.info("Tenant is: " + tenant)
-        old_device = assert_device_exists(deviceid)
-
-        LOGGER.info("Parsing payload...")
+        # In fact, the actual device is not needed. We must be sure that it exists.
+        assert_device_exists(deviceid)
         json_payload = json.loads(request.data)
-        LOGGER.info("... payload was parsed")
         kafka_handler = KafkaHandler()
+        # Remove topic metadata from JSON to be sent to the device
+        # Should this be moved to a HTTP header?
         topic = json_payload["topic"]
         del json_payload["topic"]
 
