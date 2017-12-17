@@ -242,6 +242,7 @@ def configure_device(deviceid):
 
         kafka_handler.configure(json_payload, meta = { "service" : tenant, "id" : deviceid, "topic": topic})
 
+        result = {'message': 'configuration sent'}
         return make_response(result, 200)
 
     except HTTPRequestError as e:
