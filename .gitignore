@@ -1,4 +1,6 @@
 *.pyc
 *.svg
+.eggs/
+.vscode/
 
 
