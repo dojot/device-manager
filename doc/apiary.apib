@@ -3,153 +3,487 @@ HOST: http://polls.apiblueprint.org/
 
 # Device Management API
 
-Endpoints to manage connected devices.
+Device manager is responsible for management operations (CRUD) over devices and templates. 
 
-# Group Introduction
+All devices are created based on a *template*, which can be thought as a model of a device. As "model" we could think of part numbers or product models - one *prototype* from which devices are created. Templates in dojot have one label (any alphanumeric sequece), a list of attributes which will hold all the device emitted information, and optionally a few special attributes which will indicate how the device communicates, including transmission methods (protocol, ports, etc.) and message formats. 
 
-This Device Manager is responsible for dealing with management operations (CRUD) over devices. 
-All devices are created based on a "template", which can be thought as a model of a device, such as that particular sensor sold by that company which emits its readings via MQTT using a strange format. In fact, templates can represent more than just a device model: for instance, it can be a way to represent all 
+In fact, templates can represent not only "device models", but it can also abstract a "class of devices". For instance, we could have one template to represent all themometers that will be used in dojot. This template would have only one attribute called, let's say, "temperature". While creating the device, the user would select its "physical template", let's say *TexasInstr882*, and the 'thermometer' template. The user would have also to add translation instructions in order to map the temperature reading that will be sent from the device to a "temperature" attribute. 
 
-# Group Devices
+In order to create a device, a user selects which templates are going to compose this new device. All their attributes are merged together and associated to it - they are tightly linked to the original template so that any template update will reflect all associated devices.
 
-## Devices [/device]
-### Get the current list of devices [GET]
-Get the full list of devices with all their associated attributes
+# Group Templates
+Before describing the device APIs, we must detail the template endpoints. As said before, templates are a way to describe the "device model", or, more abstractly, a "device class". These templates contains all the attributes that will be applied to the device. Always remember that they can (and eventually will) be merged into one to create a single device - they must not have attributes with the same name. If this is inevitable, a tag could be added to the attribute name and, while creating the device, translation instructions could be created in order to map each attribute from the incoming message to the appropriate device attribute. 
+
+## Templates [/template]
+
+### Register a new template [POST]
+Register a new template
++ Request
+  + Headers
+    Authorization: Bearer JWT
+  + Body (application/json)
+    {
+      "label": "SensorModel",
+      "attrs": [
+        {
+          "label": "temperature",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "label": "pressure",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "label": "led",
+          "type": "dynamic",
+          "value_type": "bool"
+        },
+        {
+          "label": "fan",
+          "type": "dynamic",
+          "value_type": "bool"
+        }
+      ]
+    }
++ Response 200 (application/json)
+  {
+    "result": "ok",
+    "template": {
+      "created": "2017-12-20T18:38:48.983342+00:00",
+      "attrs": [
+        {
+          "template_id": "3",
+          "created": "2017-12-20T18:38:48.985280+00:00",
+          "label": "temperature",
+          "value_type": "float",
+          "type": "dynamic",
+          "id": 9
+        },
+        {
+          "template_id": "3",
+          "created": "2017-12-20T18:38:48.986279+00:00",
+          "label": "pressure",
+          "value_type": "float",
+          "type": "dynamic",
+          "id": 10
+        },
+        {
+          "template_id": "3",
+          "created": "2017-12-20T18:38:48.987201+00:00",
+          "label": "led",
+          "value_type": "bol",
+          "type": "dynamic",
+          "id": 11
+        },
+        {
+          "template_id": "3",
+          "created": "2017-12-20T18:38:48.988103+00:00",
+          "label": "fan",
+          "value_type": "bool",
+          "type": "dynamic",
+          "id": 12
+        }
+      ],
+      "id": 3,
+      "label": "SensorModel"
+    }
+  }
++ Response 400 (application/json)
+  {
+    "errors": {
+        "label": [
+            "Missing data for required field."
+        ]
+    },
+    "message": "failed to parse input"
+  }
+
+
+### Get the current list of templates [GET]
+Get the full list of templates with all their associated attributes.
 + Request
   + Headers
     Authorization: Bearer JWT
 + Response 200 (application/json)
   {
-    "devices": [
-        {
-            "attrs": [
-                {
-                    "created": "2017-10-06T10:48:15.795690+00:00",
-                    "id": 1,
-                    "label": "custom.a",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                },
-                {
-                    "created": "2017-10-06T10:48:15.797245+00:00",
-                    "id": 2,
-                    "label": "custom.b",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                },
-                {
-                    "created": "2017-10-06T10:48:15.797639+00:00",
-                    "id": 3,
-                    "label": "custom.c",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                }
-            ],
-            "created": "2017-10-06T10:48:15.798365+00:00",
-            "device_id": "0425",
-            "frequency": 2000,
-            "label": "test-device",
-            "protocol": "MQTT",
-            "template": 1
-        },
-        {
-            "attrs": [
-                {
-                    "created": "2017-10-06T10:48:15.795690+00:00",
-                    "id": 1,
-                    "label": "custom.a",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                },
-                {
-                    "created": "2017-10-06T10:48:15.797245+00:00",
-                    "id": 2,
-                    "label": "custom.b",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                },
-                {
-                    "created": "2017-10-06T10:48:15.797639+00:00",
-                    "id": 3,
-                    "label": "custom.c",
-                    "template_id": "1",
-                    "type": "dynamic",
-                    "value_type": "string"
-                }
-            ],
-            "created": "2017-10-06T10:48:18.220313+00:00",
-            "device_id": "6888",
-            "frequency": 2000,
-            "label": "test-device",
-            "protocol": "MQTT",
-            "template": 1,
-            "updated": "2017-10-06T11:00:49.127223+00:00"
-        }
-    ],
     "pagination": {
-        "has_next": false,
-        "next_page": null,
-        "page": 1,
-        "total": 1
-    }
+      "has_next": false,
+      "next_page": null,
+      "page": 1,
+      "total": 1
+    },
+    "templates": [
+      {
+        "attrs": [
+          {
+            "created": "2017-12-20T18:42:21.089367+00:00",
+            "id": 13,
+            "label": "temperature",
+            "template_id": "4",
+            "type": "dynamic",
+            "value_type": "float"
+          },
+          {
+            "created": "2017-12-20T18:42:21.090601+00:00",
+            "id": 14,
+            "label": "pressure",
+            "template_id": "4",
+            "type": "dynamic",
+            "value_type": "float"
+          },
+          {
+            "created": "2017-12-20T18:42:21.091596+00:00",
+            "id": 15,
+            "label": "led",
+            "template_id": "4",
+            "type": "dynamic",
+            "value_type": "bool"
+          },
+          {
+            "created": "2017-12-20T18:42:21.092641+00:00",
+            "id": 16,
+            "label": "fan",
+            "template_id": "4",
+            "type": "dynamic",
+            "value_type": "bool"
+          }
+        ],
+        "created": "2017-12-20T18:42:21.087782+00:00",
+        "id": 4,
+        "label": "SensorModel"
+      }
+    ]
   }
 
 
-### Register a new device [POST]
-Register a new device
-+ Request (application/json)
+## Template info [/template/{id}]
+Access a specific template
++ parameters
+  + id: (required, string) - The template ID
+
+### Delete template [DELETE]
+Removes a template. If any device is based on the template being removed, then all its attributes will be also removed.
++ Response 200 (application/json)
+  {
+    "removed": {
+      "attrs": [
+        {
+          "created": "2017-12-20T18:42:21.089367+00:00",
+          "id": 13,
+          "label": "temperature",
+          "template_id": "4",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "created": "2017-12-20T18:42:21.090601+00:00",
+          "id": 14,
+          "label": "pressure",
+          "template_id": "4",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "created": "2017-12-20T18:42:21.091596+00:00",
+          "id": 15,
+          "label": "led",
+          "template_id": "4",
+          "type": "dynamic",
+          "value_type": "bool"
+        },
+        {
+          "created": "2017-12-20T18:42:21.092641+00:00",
+          "id": 16,
+          "label": "fan",
+          "template_id": "4",
+          "type": "dynamic",
+          "value_type": "bool"
+        }
+      ],
+      "created": "2017-12-20T18:42:21.087782+00:00",
+      "id": 4,
+      "label": "SensorModel"
+    },
+    "result": "ok"
+  }
++ Response 404 (application/json)
+  {
+    "message": "No such template: 123",
+    "status": 404
+  }
+
+### Get template info [GET]
+Retrieves all information from a specific template
++ Response 200 (application/json)
+  {
+    "attrs": [
+      {
+        "created": "2017-12-20T18:42:21.089367+00:00",
+        "id": 13,
+        "label": "temperature",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "float"
+      },
+      {
+        "created": "2017-12-20T18:42:21.090601+00:00",
+        "id": 14,
+        "label": "pressure",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "float"
+      },
+      {
+        "created": "2017-12-20T18:42:21.091596+00:00",
+        "id": 15,
+        "label": "led",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "bool"
+      },
+      {
+        "created": "2017-12-20T18:42:21.092641+00:00",
+        "id": 16,
+        "label": "fan",
+        "template_id": "4",
+        "type": "dynamic",
+        "value_type": "bool"
+      }
+    ],
+    "created": "2017-12-20T18:42:21.087782+00:00",
+    "id": 4,
+    "label": "SensorModel"
+  }
++ Response 404 (application/json)
+  {
+    "message": "No such template: 123",
+    "status": 404
+  }
+
+### Update template info [PUT]
+Replaces all attributes from a specific template.
+All devices based on this template will be also updated.
++ Request
   + Headers
     Authorization: Bearer JWT
-  + Body
+  + Body (application/json)
     {
-      "label": "test-device",
-      "protocol": "MQTT",
+      "label": "SensorModel",
       "attrs": [
-          {"label": "custom.a", "type": "dynamic", "value_type": "string"},
-          {"label": "custom.b", "type": "dynamic", "value_type": "string"},
-          {"label": "custom.c", "type": "dynamic", "value_type": "string"}
+        {
+          "label": "temperature",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "label": "pressure",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "label": "led",
+          "type": "dynamic",
+          "value_type": "bool"
+        },
+        {
+          "label": "fan",
+          "type": "dynamic",
+          "value_type": "bool"
+        },
+        {
+          "label": "fan2",
+          "type": "dynamic",
+          "value_type": "bool"
+        }
       ]
     }
 + Response 200 (application/json)
   {
-    "device": {
-      "protocol": "MQTT",
-      "created": "2017-10-06T10:48:18.220313+00:00",
-      "label": "test-device",
-      "frequency": 2000,
+    "updated": {
+      "created": "2017-12-20T18:52:34.361828+00:00",
       "attrs": [
         {
-          "template_id": "2",
-          "created": "2017-10-06T10:48:18.220972+00:00",
-          "label": "custom.a",
-          "value_type": "string",
+          "template_id": "6",
+          "created": "2017-12-20T18:53:19.808891+00:00",
+          "label": "temperature",
+          "value_type": "float",
           "type": "dynamic",
-          "id": 4
+          "id": 30
         },
         {
-          "template_id": "2",
-          "created": "2017-10-06T10:48:18.221577+00:00",
-          "label": "custom.b",
-          "value_type": "string",
+          "template_id": "6",
+          "created": "2017-12-20T18:53:19.809999+00:00",
+          "label": "pressure",
+          "value_type": "float",
           "type": "dynamic",
-          "id": 5
+          "id": 31
         },
         {
-          "template_id": "2",
-          "created": "2017-10-06T10:48:18.221989+00:00",
-          "label": "custom.c",
-          "value_type": "string",
+          "template_id": "6",
+          "created": "2017-12-20T18:53:19.810846+00:00",
+          "label": "led",
+          "value_type": "bool",
           "type": "dynamic",
-          "id": 6
+          "id": 32
+        },
+        {
+          "template_id": "6",
+          "created": "2017-12-20T18:53:19.811781+00:00",
+          "label": "fan",
+          "value_type": "bool",
+          "type": "dynamic",
+          "id": 33
+        },
+        {
+          "template_id": "6",
+          "created": "2017-12-20T18:53:19.812699+00:00",
+          "label": "fan2",
+          "value_type": "bool",
+          "type": "dynamic",
+          "id": 34
         }
       ],
-      "template": 2,
-      "device_id": "6888"
+      "id": 6,
+      "label": "SensorModel"
+    },
+    "result": "ok"
+  }
++ Response 404 (application/json)
+  {
+    "message": "No such template: 123",
+    "status": 404
+  }
+
+
+# Group Devices
+
+All these endpoints are related to CRUD operations over devices. 
+
+## Devices [/device]
+### Get the current list of devices [GET]
+Get the full list of devices with all their associated attributes.
+Each attribute from *attrs* is the template ID from where the attributes came from. 
+In this example, there is only one template (ID 1).
++ Request
+  + Headers
+    Authorization: Bearer JWT
++ Response 200 (application/json)
+{
+  "devices": [
+    {
+      "attrs": {
+        "1": [
+          {
+            "created": "2017-12-20T18:14:43.994796+00:00",
+            "id": 1,
+            "label": "tag_temperature",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "float"
+          },
+          {
+            "created": "2017-12-20T18:14:44.014065+00:00",
+            "id": 2,
+            "label": "tag_pressure",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "float"
+          },
+          {
+            "created": "2017-12-20T18:14:44.015474+00:00",
+            "id": 3,
+            "label": "tag_led",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "bool"
+          },
+          {
+            "created": "2017-12-20T18:14:44.016804+00:00",
+            "id": 4,
+            "label": "tag_fan",
+            "template_id": "1",
+            "type": "dynamic",
+            "value_type": "bool"
+          }
+        ]
+      },
+      "created": "2017-12-20T18:15:08.864677+00:00",
+      "id": "10cf",
+      "label": "sensor-4",
+      "templates": [
+        1
+      ]
+    }
+  ],
+  "pagination": {
+    "has_next": false,
+    "next_page": null,
+    "page": 1,
+    "total": 1
+  }
+}
+
+### Register a new device [POST]
+Register a new device. In this example, there is already a template (ID 1) which describes all the attributes to be applied to this device.
+ - TODO: posting devices without templates is not yet working properly.
++ Request (application/json)
+  + Headers
+    Authorization: Bearer JWT
+  + Body
+  {
+    "templates": [
+      "1"
+    ],
+    "label": "sensor-4",
+    "protocol": "MQTT"
+  }
++ Response 200 (application/json)
+  {
+    "device": {
+      "templates": [
+        1
+      ],
+      "created": "2017-12-20T18:15:08.864677+00:00",
+      "attrs": {
+        "1": [
+          {
+            "template_id": "1",
+            "created": "2017-12-20T18:14:43.994796+00:00",
+            "label": "tag_temperature",
+            "value_type": "float",
+            "type": "dynamic",
+            "id": 1
+          },
+          {
+            "template_id": "1",
+            "created": "2017-12-20T18:14:44.014065+00:00",
+            "label": "tag_pressure",
+            "value_type": "float",
+            "type": "dynamic",
+            "id": 2
+          },
+          {
+            "template_id": "1",
+            "created": "2017-12-20T18:14:44.015474+00:00",
+            "label": "tag_led",
+            "value_type": "bool",
+            "type": "dynamic",
+            "id": 3
+          },
+          {
+            "template_id": "1",
+            "created": "2017-12-20T18:14:44.016804+00:00",
+            "label": "tag_fan",
+            "value_type": "bool",
+            "type": "dynamic",
+            "id": 4
+          }
+        ]
+      },
+      "id": "10cf",
+      "label": "sensor-4"
     },
     "message": "device created"
   }
@@ -182,40 +516,49 @@ Retrieves all information from a specific device
     Authorization: Bearer JWT
 + Response 200 (application/json)
   {
-    "attrs": [
-        {
-            "created": "2017-10-06T10:48:15.795690+00:00",
-            "id": 1,
-            "label": "custom.a",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "string"
-        },
-        {
-            "created": "2017-10-06T10:48:15.797245+00:00",
-            "id": 2,
-            "label": "custom.b",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "string"
-        },
-        {
-            "created": "2017-10-06T10:48:15.797639+00:00",
-            "id": 3,
-            "label": "custom.c",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "string"
-        }
-    ],
-    "created": "2017-10-06T10:48:18.220313+00:00",
-    "device_id": "6888",
-    "frequency": 2000,
-    "label": "test-device",
-    "protocol": "MQTT",
-    "template": 1,
-    "updated": "2017-10-06T11:00:49.127223+00:00"
-  }
+  "attrs": {
+    "1": [
+      {
+        "created": "2017-12-20T18:14:43.994796+00:00",
+        "id": 1,
+        "label": "tag_temperature",
+        "template_id": "1",
+        "type": "dynamic",
+        "value_type": "float"
+      },
+      {
+        "created": "2017-12-20T18:14:44.014065+00:00",
+        "id": 2,
+        "label": "tag_pressure",
+        "template_id": "1",
+        "type": "dynamic",
+        "value_type": "float"
+      },
+      {
+        "created": "2017-12-20T18:14:44.015474+00:00",
+        "id": 3,
+        "label": "tag_led",
+        "template_id": "1",
+        "type": "dynamic",
+        "value_type": "bool"
+      },
+      {
+        "created": "2017-12-20T18:14:44.016804+00:00",
+        "id": 4,
+        "label": "tag_fan",
+        "template_id": "1",
+        "type": "dynamic",
+        "value_type": "bool"
+      }
+    ]
+  },
+  "created": "2017-12-20T18:15:08.864677+00:00",
+  "id": "10cf",
+  "label": "sensor-4",
+  "templates": [
+    1
+  ]
+}
 + Response 404 (application/json)
   {
       "message": "No such device: aaaa",
@@ -226,44 +569,52 @@ Retrieves all information from a specific device
 Removes a device
 + Response 200 (application/json)
   {
-    "removed_device": {
-        "attrs": [
-            {
-                "created": "2017-10-06T10:48:15.795690+00:00",
-                "id": 1,
-                "label": "custom.a",
-                "template_id": "1",
-                "type": "dynamic",
-                "value_type": "string"
-            },
-            {
-                "created": "2017-10-06T10:48:15.797245+00:00",
-                "id": 2,
-                "label": "custom.b",
-                "template_id": "1",
-                "type": "dynamic",
-                "value_type": "string"
-            },
-            {
-                "created": "2017-10-06T10:48:15.797639+00:00",
-                "id": 3,
-                "label": "custom.c",
-                "template_id": "1",
-                "type": "dynamic",
-                "value_type": "string"
-            }
-        ],
-        "created": "2017-10-06T10:48:18.220313+00:00",
-        "device_id": "6888",
-        "frequency": 2000,
-        "label": "test-device",
-        "protocol": "MQTT",
-        "template": 1,
-        "updated": "2017-10-06T11:00:49.127223+00:00"
+  "removed_device": {
+    "attrs": {
+      "1": [
+        {
+          "created": "2017-12-20T18:14:43.994796+00:00",
+          "id": 1,
+          "label": "tag_temperature",
+          "template_id": "1",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "created": "2017-12-20T18:14:44.014065+00:00",
+          "id": 2,
+          "label": "tag_pressure",
+          "template_id": "1",
+          "type": "dynamic",
+          "value_type": "float"
+        },
+        {
+          "created": "2017-12-20T18:14:44.015474+00:00",
+          "id": 3,
+          "label": "tag_led",
+          "template_id": "1",
+          "type": "dynamic",
+          "value_type": "bool"
+        },
+        {
+          "created": "2017-12-20T18:14:44.016804+00:00",
+          "id": 4,
+          "label": "tag_fan",
+          "template_id": "1",
+          "type": "dynamic",
+          "value_type": "bool"
+        }
+      ]
     },
-    "result": "ok"
-  }
-
+    "created": "2017-12-20T18:15:08.864677+00:00",
+    "id": "10cf",
+    "label": "sensor-4",
+    "templates": [
+      1
+    ]
+  },
+  "result": "ok"
+}
 + Response 404 (application/json)
   {
     "message": "No such device: aaaa",
@@ -271,7 +622,8 @@ Removes a device
   }
 
 ### Update device info [PUT]
-Replaces all attributes from a specific device
+Replaces all attributes from a specific device.
+- TODO: updating devices is not yet working properly.
 + Request
   + Headers
     Authorization: Bearer JWT
@@ -331,255 +683,3 @@ Replaces all attributes from a specific device
 
 
 
-# Group Templates
-## Templates [/template]
-
-### Get the current list of templates [GET]
-Get the full list of templates with all their associated attributes
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-+ Response 200 (application/json)
-  {
-    "pagination": {
-      "has_next": false,
-      "next_page": null,
-      "page": 1,
-      "total": 1
-    },
-    "templates": [
-      {
-        "attrs": [
-          {
-            "created": "2017-10-09T18:58:06.560734+00:00",
-            "id": 1,
-            "label": "attr.a",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "string"
-          },
-          {
-            "created": "2017-10-09T18:58:06.562147+00:00",
-            "id": 2,
-            "label": "attr.b",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "string"
-          }
-        ],
-        "created": "2017-10-09T18:58:06.558058+00:00",
-        "id": 1,
-        "label": "test_template"
-      },
-      {
-        "attrs": [
-          {
-            "created": "2017-10-09T18:58:08.587078+00:00",
-            "id": 5,
-            "label": "attr.a",
-            "template_id": "3",
-            "type": "dynamic",
-            "value_type": "string"
-          },
-          {
-            "created": "2017-10-09T18:58:08.587522+00:00",
-            "id": 6,
-            "label": "attr.b",
-            "template_id": "3",
-            "type": "dynamic",
-            "value_type": "string"
-          }
-        ],
-        "created": "2017-10-09T18:58:08.586395+00:00",
-        "id": 3,
-        "label": "test_template"
-      },
-      {
-        "attrs": [
-          {
-            "created": "2017-10-09T19:12:40.176937+00:00",
-            "id": 11,
-            "label": "attr.a",
-            "template_id": "4",
-            "type": "dynamic",
-            "updated": "2017-10-09T19:13:31.138364+00:00",
-            "value_type": "string"
-          },
-          {
-            "created": "2017-10-09T19:12:40.177666+00:00",
-            "id": 12,
-            "label": "attr.b",
-            "static_value": "qwer",
-            "template_id": "4",
-            "type": "meta",
-            "updated": "2017-10-09T19:13:31.138995+00:00",
-            "value_type": "mapping"
-          }
-        ],
-        "created": "2017-10-09T19:02:47.462534+00:00",
-        "id": 4,
-        "label": "test_template_upd",
-        "updated": "2017-10-09T19:12:40.175548+00:00"
-      }
-    ]
-  }
-
-
-### Register a new template [POST]
-Register a new template
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-  + Body (application/json)
-    {
-      "label": "test_template",
-      "attrs": [
-        {"label":"attr.a","type":"dynamic","value_type":"string"},
-        {"label":"attr.b","type":"dynamic","value_type":"string"}
-      ]
-    }
-+ Response 200 (application/json)
-  {
-  "result": "ok",
-  "template": {
-    "attrs": [
-      {
-        "created": "2017-10-09T19:02:47.463580+00:00",
-        "id": 7,
-        "label": "attr.a",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "string"
-      },
-      {
-        "created": "2017-10-09T19:02:47.464119+00:00",
-        "id": 8,
-        "label": "attr.b",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "string"
-      }
-    ],
-    "created": "2017-10-09T19:02:47.462534+00:00",
-    "id": 4,
-    "label": "test_template"
-  }
-}
-+ Response 400 (application/json)
-  {
-    "errors": {
-        "label": [
-            "Missing data for required field."
-        ]
-    },
-    "message": "failed to parse input"
-  }
-
-## Template info [/template/{id}]
-Access a specific template
-+ parameters
-  + id: (required, string) - The template ID
-
-
-### Delete template [DELETE]
-Removes a template
-+ Response 200 (application/json)
-  {
-    "removed": {
-      "attrs": [
-        {
-          "created": "2017-10-09T18:58:07.681866+00:00",
-          "id": 3,
-          "label": "attr.a",
-          "template_id": "2",
-          "type": "dynamic",
-          "value_type": "string"
-        },
-        {
-          "created": "2017-10-09T18:58:07.682231+00:00",
-          "id": 4,
-          "label": "attr.b",
-          "template_id": "2",
-          "type": "dynamic",
-          "value_type": "string"
-        }
-      ],
-      "created": "2017-10-09T18:58:07.681183+00:00",
-      "id": 2,
-      "label": "test_template"
-    },
-    "result": "ok"
-  }
-+ Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
-
-### Get template info [GET]
-Retrieves all information from a specific template
-+ Response 200 (application/json)
-  {
-  "attrs": [
-    {
-      "created": "2017-10-09T18:58:06.560734+00:00",
-      "id": 1,
-      "label": "attr.a",
-      "template_id": "1",
-      "type": "dynamic",
-      "value_type": "string"
-    },
-    {
-      "created": "2017-10-09T18:58:06.562147+00:00",
-      "id": 2,
-      "label": "attr.b",
-      "template_id": "1",
-      "type": "dynamic",
-      "value_type": "string"
-    }
-  ],
-  "created": "2017-10-09T18:58:06.558058+00:00",
-  "id": 1,
-  "label": "test_template"
-}
-+ Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
-### Update template info [PUT]
-Replaces all attributes from a specific template
-+ Response 200 (application/json)
-  {
-    "result": "ok",
-    "updated": {
-      "attrs": [
-        {
-          "created": "2017-10-09T19:12:40.176937+00:00",
-          "id": 11,
-          "label": "attr.a",
-          "template_id": "4",
-          "type": "dynamic",
-          "value_type": "string"
-        },
-        {
-          "created": "2017-10-09T19:12:40.177666+00:00",
-          "id": 12,
-          "label": "attr.b",
-          "static_value": "asdf",
-          "template_id": "4",
-          "type": "meta",
-          "value_type": "mapping"
-        }
-      ],
-      "created": "2017-10-09T19:02:47.462534+00:00",
-      "id": 4,
-      "label": "test_template_upd",
-      "updated": "2017-10-09T19:12:40.175548+00:00"
-    }
-  }
-+ Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
