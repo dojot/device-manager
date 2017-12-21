@@ -18,343 +18,370 @@ Before describing the device APIs, we must detail the template endpoints. As sai
 
 ### Register a new template [POST]
 Register a new template
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-  + Body (application/json)
-    {
-      "label": "SensorModel",
-      "attrs": [
-        {
-          "label": "temperature",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "label": "pressure",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "label": "led",
-          "type": "dynamic",
-          "value_type": "bool"
-        },
-        {
-          "label": "fan",
-          "type": "dynamic",
-          "value_type": "bool"
-        }
-      ]
-    }
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Bearer JWT
+
+    + Body
+
+            {
+                "label": "SensorModel",
+                "attrs": [
+                    {
+                        "label": "temperature",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "label": "pressure",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "label": "led",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    },
+                    {
+                        "label": "fan",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    }
+                ]
+            }
+
 + Response 200 (application/json)
-  {
-    "result": "ok",
-    "template": {
-      "created": "2017-12-20T18:38:48.983342+00:00",
-      "attrs": [
-        {
-          "template_id": "3",
-          "created": "2017-12-20T18:38:48.985280+00:00",
-          "label": "temperature",
-          "value_type": "float",
-          "type": "dynamic",
-          "id": 9
-        },
-        {
-          "template_id": "3",
-          "created": "2017-12-20T18:38:48.986279+00:00",
-          "label": "pressure",
-          "value_type": "float",
-          "type": "dynamic",
-          "id": 10
-        },
-        {
-          "template_id": "3",
-          "created": "2017-12-20T18:38:48.987201+00:00",
-          "label": "led",
-          "value_type": "bol",
-          "type": "dynamic",
-          "id": 11
-        },
-        {
-          "template_id": "3",
-          "created": "2017-12-20T18:38:48.988103+00:00",
-          "label": "fan",
-          "value_type": "bool",
-          "type": "dynamic",
-          "id": 12
-        }
-      ],
-      "id": 3,
-      "label": "SensorModel"
-    }
-  }
+
+            {
+                "result": "ok",
+                "template": {
+                    "created": "2017-12-20T18:38:48.983342+00:00",
+                    "attrs": [
+                        {
+                            "template_id": "3",
+                            "created": "2017-12-20T18:38:48.985280+00:00",
+                            "label": "temperature",
+                            "value_type": "float",
+                            "type": "dynamic",
+                            "id": 9
+                        },
+                        {
+                            "template_id": "3",
+                            "created": "2017-12-20T18:38:48.986279+00:00",
+                            "label": "pressure",
+                            "value_type": "float",
+                            "type": "dynamic",
+                            "id": 10
+                        },
+                        {
+                            "template_id": "3",
+                            "created": "2017-12-20T18:38:48.987201+00:00",
+                            "label": "led",
+                            "value_type": "bol",
+                            "type": "dynamic",
+                            "id": 11
+                        },
+                        {
+                            "template_id": "3",
+                            "created": "2017-12-20T18:38:48.988103+00:00",
+                            "label": "fan",
+                            "value_type": "bool",
+                            "type": "dynamic",
+                            "id": 12
+                        }
+                    ],
+                    "id": 3,
+                    "label": "SensorModel"
+                }
+            }
+
 + Response 400 (application/json)
-  {
-    "errors": {
-        "label": [
-            "Missing data for required field."
-        ]
-    },
-    "message": "failed to parse input"
-  }
+
+            {
+                "errors": {
+                    "label": [
+                        "Missing data for required field."
+                    ]
+                },
+                "message": "failed to parse input"
+            }
 
 
 ### Get the current list of templates [GET]
 Get the full list of templates with all their associated attributes.
+
 + Request
-  + Headers
-    Authorization: Bearer JWT
+      + Headers
+
+            Authorization: Bearer JWT
+
 + Response 200 (application/json)
-  {
-    "pagination": {
-      "has_next": false,
-      "next_page": null,
-      "page": 1,
-      "total": 1
-    },
-    "templates": [
-      {
-        "attrs": [
-          {
-            "created": "2017-12-20T18:42:21.089367+00:00",
-            "id": 13,
-            "label": "temperature",
-            "template_id": "4",
-            "type": "dynamic",
-            "value_type": "float"
-          },
-          {
-            "created": "2017-12-20T18:42:21.090601+00:00",
-            "id": 14,
-            "label": "pressure",
-            "template_id": "4",
-            "type": "dynamic",
-            "value_type": "float"
-          },
-          {
-            "created": "2017-12-20T18:42:21.091596+00:00",
-            "id": 15,
-            "label": "led",
-            "template_id": "4",
-            "type": "dynamic",
-            "value_type": "bool"
-          },
-          {
-            "created": "2017-12-20T18:42:21.092641+00:00",
-            "id": 16,
-            "label": "fan",
-            "template_id": "4",
-            "type": "dynamic",
-            "value_type": "bool"
-          }
-        ],
-        "created": "2017-12-20T18:42:21.087782+00:00",
-        "id": 4,
-        "label": "SensorModel"
-      }
-    ]
-  }
+
+            {
+                "pagination": {
+                    "has_next": false,
+                    "next_page": null,
+                    "page": 1,
+                    "total": 1
+                },
+                "templates": [
+                    {
+                        "attrs": [
+                            {
+                                "created": "2017-12-20T18:42:21.089367+00:00",
+                                "id": 13,
+                                "label": "temperature",
+                                "template_id": "4",
+                                "type": "dynamic",
+                                "value_type": "float"
+                            },
+                            {
+                                "created": "2017-12-20T18:42:21.090601+00:00",
+                                "id": 14,
+                                "label": "pressure",
+                                "template_id": "4",
+                                "type": "dynamic",
+                                "value_type": "float"
+                            },
+                            {
+                                "created": "2017-12-20T18:42:21.091596+00:00",
+                                "id": 15,
+                                "label": "led",
+                                "template_id": "4",
+                                "type": "dynamic",
+                                "value_type": "bool"
+                            },
+                            {
+                                "created": "2017-12-20T18:42:21.092641+00:00",
+                                "id": 16,
+                                "label": "fan",
+                                "template_id": "4",
+                                "type": "dynamic",
+                                "value_type": "bool"
+                            }
+                        ],
+                        "created": "2017-12-20T18:42:21.087782+00:00",
+                        "id": 4,
+                        "label": "SensorModel"
+                    }
+                ]
+            }
 
 
 ## Template info [/template/{id}]
 Access a specific template
 + parameters
-  + id: (required, string) - The template ID
+    + id: `83af` (required, string) - The template ID
 
 ### Delete template [DELETE]
 Removes a template. If any device is based on the template being removed, then all its attributes will be also removed.
 + Response 200 (application/json)
-  {
-    "removed": {
-      "attrs": [
-        {
-          "created": "2017-12-20T18:42:21.089367+00:00",
-          "id": 13,
-          "label": "temperature",
-          "template_id": "4",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "created": "2017-12-20T18:42:21.090601+00:00",
-          "id": 14,
-          "label": "pressure",
-          "template_id": "4",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "created": "2017-12-20T18:42:21.091596+00:00",
-          "id": 15,
-          "label": "led",
-          "template_id": "4",
-          "type": "dynamic",
-          "value_type": "bool"
-        },
-        {
-          "created": "2017-12-20T18:42:21.092641+00:00",
-          "id": 16,
-          "label": "fan",
-          "template_id": "4",
-          "type": "dynamic",
-          "value_type": "bool"
-        }
-      ],
-      "created": "2017-12-20T18:42:21.087782+00:00",
-      "id": 4,
-      "label": "SensorModel"
-    },
-    "result": "ok"
-  }
+
+            {
+                "removed": {
+                    "attrs": [
+                        {
+                            "created": "2017-12-20T18:42:21.089367+00:00",
+                            "id": 13,
+                            "label": "temperature",
+                            "template_id": "4",
+                            "type": "dynamic",
+                            "value_type": "float"
+                        },
+                        {
+                            "created": "2017-12-20T18:42:21.090601+00:00",
+                            "id": 14,
+                            "label": "pressure",
+                            "template_id": "4",
+                            "type": "dynamic",
+                            "value_type": "float"
+                        },
+                        {
+                            "created": "2017-12-20T18:42:21.091596+00:00",
+                            "id": 15,
+                            "label": "led",
+                            "template_id": "4",
+                            "type": "dynamic",
+                            "value_type": "bool"
+                        },
+                        {
+                            "created": "2017-12-20T18:42:21.092641+00:00",
+                            "id": 16,
+                            "label": "fan",
+                            "template_id": "4",
+                            "type": "dynamic",
+                            "value_type": "bool"
+                        }
+                    ],
+                    "created": "2017-12-20T18:42:21.087782+00:00",
+                    "id": 4,
+                    "label": "SensorModel"
+                },
+                "result": "ok"
+            }
+
 + Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
+
+            {
+                "message": "No such template: 123",
+                "status": 404
+            }
+
 
 ### Get template info [GET]
 Retrieves all information from a specific template
 + Response 200 (application/json)
-  {
-    "attrs": [
-      {
-        "created": "2017-12-20T18:42:21.089367+00:00",
-        "id": 13,
-        "label": "temperature",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "float"
-      },
-      {
-        "created": "2017-12-20T18:42:21.090601+00:00",
-        "id": 14,
-        "label": "pressure",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "float"
-      },
-      {
-        "created": "2017-12-20T18:42:21.091596+00:00",
-        "id": 15,
-        "label": "led",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "bool"
-      },
-      {
-        "created": "2017-12-20T18:42:21.092641+00:00",
-        "id": 16,
-        "label": "fan",
-        "template_id": "4",
-        "type": "dynamic",
-        "value_type": "bool"
-      }
-    ],
-    "created": "2017-12-20T18:42:21.087782+00:00",
-    "id": 4,
-    "label": "SensorModel"
-  }
+
+            {
+                "attrs": [
+                    {
+                        "created": "2017-12-20T18:42:21.089367+00:00",
+                        "id": 13,
+                        "label": "temperature",
+                        "template_id": "4",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "created": "2017-12-20T18:42:21.090601+00:00",
+                        "id": 14,
+                        "label": "pressure",
+                        "template_id": "4",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "created": "2017-12-20T18:42:21.091596+00:00",
+                        "id": 15,
+                        "label": "led",
+                        "template_id": "4",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    },
+                    {
+                        "created": "2017-12-20T18:42:21.092641+00:00",
+                        "id": 16,
+                        "label": "fan",
+                        "template_id": "4",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    }
+                ],
+                "created": "2017-12-20T18:42:21.087782+00:00",
+                "id": 4,
+                "label": "SensorModel"
+            }
+    
 + Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
+
+            {
+                "message": "No such template: 123",
+                "status": 404
+            }
 
 ### Update template info [PUT]
 Replaces all attributes from a specific template.
 All devices based on this template will be also updated.
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-  + Body (application/json)
-    {
-      "label": "SensorModel",
-      "attrs": [
-        {
-          "label": "temperature",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "label": "pressure",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "label": "led",
-          "type": "dynamic",
-          "value_type": "bool"
-        },
-        {
-          "label": "fan",
-          "type": "dynamic",
-          "value_type": "bool"
-        },
-        {
-          "label": "fan2",
-          "type": "dynamic",
-          "value_type": "bool"
-        }
-      ]
-    }
++ Request (application/json)
+    + Headers
+
+            Authorization: Bearer JWT
+
+    + Body 
+
+            {
+                "label": "SensorModel",
+                "attrs": [
+                    {
+                        "label": "temperature",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "label": "pressure",
+                        "type": "dynamic",
+                        "value_type": "float"
+                    },
+                    {
+                        "label": "led",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    },
+                    {
+                        "label": "fan",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    },
+                    {
+                        "label": "fan2",
+                        "type": "dynamic",
+                        "value_type": "bool"
+                    }
+                ]
+            }
+
+
 + Response 200 (application/json)
-  {
-    "updated": {
-      "created": "2017-12-20T18:52:34.361828+00:00",
-      "attrs": [
-        {
-          "template_id": "6",
-          "created": "2017-12-20T18:53:19.808891+00:00",
-          "label": "temperature",
-          "value_type": "float",
-          "type": "dynamic",
-          "id": 30
-        },
-        {
-          "template_id": "6",
-          "created": "2017-12-20T18:53:19.809999+00:00",
-          "label": "pressure",
-          "value_type": "float",
-          "type": "dynamic",
-          "id": 31
-        },
-        {
-          "template_id": "6",
-          "created": "2017-12-20T18:53:19.810846+00:00",
-          "label": "led",
-          "value_type": "bool",
-          "type": "dynamic",
-          "id": 32
-        },
-        {
-          "template_id": "6",
-          "created": "2017-12-20T18:53:19.811781+00:00",
-          "label": "fan",
-          "value_type": "bool",
-          "type": "dynamic",
-          "id": 33
-        },
-        {
-          "template_id": "6",
-          "created": "2017-12-20T18:53:19.812699+00:00",
-          "label": "fan2",
-          "value_type": "bool",
-          "type": "dynamic",
-          "id": 34
-        }
-      ],
-      "id": 6,
-      "label": "SensorModel"
-    },
-    "result": "ok"
-  }
+
+            {
+                "updated": {
+                    "created": "2017-12-20T18:52:34.361828+00:00",
+                    "attrs": [
+                        {
+                            "template_id": "6",
+                            "created": "2017-12-20T18:53:19.808891+00:00",
+                            "label": "temperature",
+                            "value_type": "float",
+                            "type": "dynamic",
+                            "id": 30
+                        },
+                        {
+                            "template_id": "6",
+                            "created": "2017-12-20T18:53:19.809999+00:00",
+                            "label": "pressure",
+                            "value_type": "float",
+                            "type": "dynamic",
+                            "id": 31
+                        },
+                        {
+                            "template_id": "6",
+                            "created": "2017-12-20T18:53:19.810846+00:00",
+                            "label": "led",
+                            "value_type": "bool",
+                            "type": "dynamic",
+                            "id": 32
+                        },
+                        {
+                            "template_id": "6",
+                            "created": "2017-12-20T18:53:19.811781+00:00",
+                            "label": "fan",
+                            "value_type": "bool",
+                            "type": "dynamic",
+                            "id": 33
+                        },
+                        {
+                            "template_id": "6",
+                            "created": "2017-12-20T18:53:19.812699+00:00",
+                            "label": "fan2",
+                            "value_type": "bool",
+                            "type": "dynamic",
+                            "id": 34
+                        }
+                    ],
+                    "id": 6,
+                    "label": "SensorModel"
+                },
+                "result": "ok"
+            }
+
 + Response 404 (application/json)
-  {
-    "message": "No such template: 123",
-    "status": 404
-  }
+
+            {
+                "message": "No such template: 123",
+                "status": 404
+            }
 
 
 # Group Devices
@@ -367,319 +394,360 @@ Get the full list of devices with all their associated attributes.
 Each attribute from *attrs* is the template ID from where the attributes came from. 
 In this example, there is only one template (ID 1).
 + Request
-  + Headers
-    Authorization: Bearer JWT
+      + Headers
+
+            Authorization: Bearer JWT
+
 + Response 200 (application/json)
-{
-  "devices": [
-    {
-      "attrs": {
-        "1": [
-          {
-            "created": "2017-12-20T18:14:43.994796+00:00",
-            "id": 1,
-            "label": "tag_temperature",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "float"
-          },
-          {
-            "created": "2017-12-20T18:14:44.014065+00:00",
-            "id": 2,
-            "label": "tag_pressure",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "float"
-          },
-          {
-            "created": "2017-12-20T18:14:44.015474+00:00",
-            "id": 3,
-            "label": "tag_led",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "bool"
-          },
-          {
-            "created": "2017-12-20T18:14:44.016804+00:00",
-            "id": 4,
-            "label": "tag_fan",
-            "template_id": "1",
-            "type": "dynamic",
-            "value_type": "bool"
-          }
-        ]
-      },
-      "created": "2017-12-20T18:15:08.864677+00:00",
-      "id": "10cf",
-      "label": "sensor-4",
-      "templates": [
-        1
-      ]
-    }
-  ],
-  "pagination": {
-    "has_next": false,
-    "next_page": null,
-    "page": 1,
-    "total": 1
-  }
-}
+
+            {
+                "devices": [
+                    {
+                        "attrs": {
+                            "1": [
+                                {
+                                    "created": "2017-12-20T18:14:43.994796+00:00",
+                                    "id": 1,
+                                    "label": "tag_temperature",
+                                    "template_id": "1",
+                                    "type": "dynamic",
+                                    "value_type": "float"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.014065+00:00",
+                                    "id": 2,
+                                    "label": "tag_pressure",
+                                    "template_id": "1",
+                                    "type": "dynamic",
+                                    "value_type": "float"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.015474+00:00",
+                                    "id": 3,
+                                    "label": "tag_led",
+                                    "template_id": "1",
+                                    "type": "dynamic",
+                                    "value_type": "bool"
+                                },
+                                {
+                                    "created": "2017-12-20T18:14:44.016804+00:00",
+                                    "id": 4,
+                                    "label": "tag_fan",
+                                    "template_id": "1",
+                                    "type": "dynamic",
+                                    "value_type": "bool"
+                                }
+                            ]
+                        },
+                        "created": "2017-12-20T18:15:08.864677+00:00",
+                        "id": "10cf",
+                        "label": "sensor-4",
+                        "templates": [
+                            1
+                        ]
+                    }
+                ],
+                "pagination": {
+                    "has_next": false,
+                    "next_page": null,
+                    "page": 1,
+                    "total": 1
+                }
+            }
 
 ### Register a new device [POST]
 Register a new device. In this example, there is already a template (ID 1) which describes all the attributes to be applied to this device.
  - TODO: posting devices without templates is not yet working properly.
 + Request (application/json)
-  + Headers
-    Authorization: Bearer JWT
-  + Body
-  {
-    "templates": [
-      "1"
-    ],
-    "label": "sensor-4",
-    "protocol": "MQTT"
-  }
+    + Headers
+
+            Authorization: Bearer JWT
+    
+    + Body
+
+            {
+                "templates": [
+                    "1"
+                ],
+                "label": "sensor-4",
+                "protocol": "MQTT"
+            }
+
 + Response 200 (application/json)
-  {
-    "device": {
-      "templates": [
-        1
-      ],
-      "created": "2017-12-20T18:15:08.864677+00:00",
-      "attrs": {
-        "1": [
-          {
-            "template_id": "1",
-            "created": "2017-12-20T18:14:43.994796+00:00",
-            "label": "tag_temperature",
-            "value_type": "float",
-            "type": "dynamic",
-            "id": 1
-          },
-          {
-            "template_id": "1",
-            "created": "2017-12-20T18:14:44.014065+00:00",
-            "label": "tag_pressure",
-            "value_type": "float",
-            "type": "dynamic",
-            "id": 2
-          },
-          {
-            "template_id": "1",
-            "created": "2017-12-20T18:14:44.015474+00:00",
-            "label": "tag_led",
-            "value_type": "bool",
-            "type": "dynamic",
-            "id": 3
-          },
-          {
-            "template_id": "1",
-            "created": "2017-12-20T18:14:44.016804+00:00",
-            "label": "tag_fan",
-            "value_type": "bool",
-            "type": "dynamic",
-            "id": 4
-          }
-        ]
-      },
-      "id": "10cf",
-      "label": "sensor-4"
-    },
-    "message": "device created"
-  }
+
+            {
+                "device": {
+                    "templates": [
+                        1
+                    ],
+                    "created": "2017-12-20T18:15:08.864677+00:00",
+                    "attrs": {
+                        "1": [
+                            {
+                                "template_id": "1",
+                                "created": "2017-12-20T18:14:43.994796+00:00",
+                                "label": "tag_temperature",
+                                "value_type": "float",
+                                "type": "dynamic",
+                                "id": 1
+                            },
+                            {
+                                "template_id": "1",
+                                "created": "2017-12-20T18:14:44.014065+00:00",
+                                "label": "tag_pressure",
+                                "value_type": "float",
+                                "type": "dynamic",
+                                "id": 2
+                            },
+                            {
+                                "template_id": "1",
+                                "created": "2017-12-20T18:14:44.015474+00:00",
+                                "label": "tag_led",
+                                "value_type": "bool",
+                                "type": "dynamic",
+                                "id": 3
+                            },
+                            {
+                                "template_id": "1",
+                                "created": "2017-12-20T18:14:44.016804+00:00",
+                                "label": "tag_fan",
+                                "value_type": "bool",
+                                "type": "dynamic",
+                                "id": 4
+                            }
+                        ]
+                    },
+                    "id": "10cf",
+                    "label": "sensor-4"
+                },
+                "message": "device created"
+            }
+
 + Response 400 (application/json)
-  {"status" : "Faied to parse payload as JSON"}
+
+            {"status" : "Faied to parse payload as JSON"}
+
 + Response 400 (application/json)
-  {"status" : "unknown request format"}
+
+            {"status" : "unknown request format"}
+
 + Response 400 (application/json)
-  {"status" : "missing protocol"}
+
+            {"status" : "missing protocol"}
+
 + Response 400 (application/json)
-  {"status" : "device has missing fields"}
+
+            {"status" : "device has missing fields"}
+
 + Response 304 (application/json)
-  {"status" : "missing authorization info"}
+
+            {"status" : "missing authorization info"}
+
 + Response 500 (application/json)
-  {"status" : "failed to generate unique id"}
+
+            {"status" : "failed to generate unique id"}
+
 + Response 500 (application/json)
-  {"status" : "failed to configure device"}
+
+            {"status" : "failed to configure device"}
 
 
 
 ## Device info [/devices/{id}]
 Access a specific device
-+ parameters
-  + id: (required, string) - The device ID
+    + parameters
+      + id: (required, string) - The device ID
 
 ### Get device info [GET]
 Retrieves all information from a specific device
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-+ Response 200 (application/json)
-  {
-  "attrs": {
-    "1": [
-      {
-        "created": "2017-12-20T18:14:43.994796+00:00",
-        "id": 1,
-        "label": "tag_temperature",
-        "template_id": "1",
-        "type": "dynamic",
-        "value_type": "float"
-      },
-      {
-        "created": "2017-12-20T18:14:44.014065+00:00",
-        "id": 2,
-        "label": "tag_pressure",
-        "template_id": "1",
-        "type": "dynamic",
-        "value_type": "float"
-      },
-      {
-        "created": "2017-12-20T18:14:44.015474+00:00",
-        "id": 3,
-        "label": "tag_led",
-        "template_id": "1",
-        "type": "dynamic",
-        "value_type": "bool"
-      },
-      {
-        "created": "2017-12-20T18:14:44.016804+00:00",
-        "id": 4,
-        "label": "tag_fan",
-        "template_id": "1",
-        "type": "dynamic",
-        "value_type": "bool"
-      }
-    ]
-  },
-  "created": "2017-12-20T18:15:08.864677+00:00",
-  "id": "10cf",
-  "label": "sensor-4",
-  "templates": [
-    1
-  ]
-}
++ Request (application/json)
+    + Headers
+
+            Authorization: Bearer JWT
+
++ Response 200 
+
+            {
+                "attrs": {
+                    "1": [
+                        {
+                            "created": "2017-12-20T18:14:43.994796+00:00",
+                            "id": 1,
+                            "label": "tag_temperature",
+                            "template_id": "1",
+                            "type": "dynamic",
+                            "value_type": "float"
+                        },
+                        {
+                            "created": "2017-12-20T18:14:44.014065+00:00",
+                            "id": 2,
+                            "label": "tag_pressure",
+                            "template_id": "1",
+                            "type": "dynamic",
+                            "value_type": "float"
+                        },
+                        {
+                            "created": "2017-12-20T18:14:44.015474+00:00",
+                            "id": 3,
+                            "label": "tag_led",
+                            "template_id": "1",
+                            "type": "dynamic",
+                            "value_type": "bool"
+                        },
+                        {
+                            "created": "2017-12-20T18:14:44.016804+00:00",
+                            "id": 4,
+                            "label": "tag_fan",
+                            "template_id": "1",
+                            "type": "dynamic",
+                            "value_type": "bool"
+                        }
+                    ]
+                },
+                "created": "2017-12-20T18:15:08.864677+00:00",
+                "id": "10cf",
+                "label": "sensor-4",
+                "templates": [
+                    1
+                ]
+            }
+
+
 + Response 404 (application/json)
-  {
-      "message": "No such device: aaaa",
-      "status": 404
-  }
+
+            {
+                "message": "No such device: aaaa",
+                "status": 404
+            }
 
 ### Delete device [DELETE]
 Removes a device
 + Response 200 (application/json)
-  {
-  "removed_device": {
-    "attrs": {
-      "1": [
-        {
-          "created": "2017-12-20T18:14:43.994796+00:00",
-          "id": 1,
-          "label": "tag_temperature",
-          "template_id": "1",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "created": "2017-12-20T18:14:44.014065+00:00",
-          "id": 2,
-          "label": "tag_pressure",
-          "template_id": "1",
-          "type": "dynamic",
-          "value_type": "float"
-        },
-        {
-          "created": "2017-12-20T18:14:44.015474+00:00",
-          "id": 3,
-          "label": "tag_led",
-          "template_id": "1",
-          "type": "dynamic",
-          "value_type": "bool"
-        },
-        {
-          "created": "2017-12-20T18:14:44.016804+00:00",
-          "id": 4,
-          "label": "tag_fan",
-          "template_id": "1",
-          "type": "dynamic",
-          "value_type": "bool"
-        }
-      ]
-    },
-    "created": "2017-12-20T18:15:08.864677+00:00",
-    "id": "10cf",
-    "label": "sensor-4",
-    "templates": [
-      1
-    ]
-  },
-  "result": "ok"
-}
+
+            {
+                "removed_device": {
+                    "attrs": {
+                        "1": [
+                            {
+                                "created": "2017-12-20T18:14:43.994796+00:00",
+                                "id": 1,
+                                "label": "tag_temperature",
+                                "template_id": "1",
+                                "type": "dynamic",
+                                "value_type": "float"
+                            },
+                            {
+                                "created": "2017-12-20T18:14:44.014065+00:00",
+                                "id": 2,
+                                "label": "tag_pressure",
+                                "template_id": "1",
+                                "type": "dynamic",
+                                "value_type": "float"
+                            },
+                            {
+                                "created": "2017-12-20T18:14:44.015474+00:00",
+                                "id": 3,
+                                "label": "tag_led",
+                                "template_id": "1",
+                                "type": "dynamic",
+                                "value_type": "bool"
+                            },
+                            {
+                                "created": "2017-12-20T18:14:44.016804+00:00",
+                                "id": 4,
+                                "label": "tag_fan",
+                                "template_id": "1",
+                                "type": "dynamic",
+                                "value_type": "bool"
+                            }
+                        ]
+                    },
+                    "created": "2017-12-20T18:15:08.864677+00:00",
+                    "id": "10cf",
+                    "label": "sensor-4",
+                    "templates": [
+                        1
+                    ]
+                },
+                "result": "ok"
+            }
+
 + Response 404 (application/json)
-  {
-    "message": "No such device: aaaa",
-    "status": 404
-  }
+            {
+                "message": "No such device: aaaa",
+                "status": 404
+            }
 
 ### Update device info [PUT]
 Replaces all attributes from a specific device.
 - TODO: updating devices is not yet working properly.
-+ Request
-  + Headers
-    Authorization: Bearer JWT
-  + Body
-    {
-      "device_id": "6888",
-      "frequency": 2000,
-      "label": "test-device",
-      "protocol": "MQTT",
-      "template": 1
-    }
++ Request (application/json)
+    + Headers
+
+            Authorization: Bearer JWT
+
+    + Body
+
+            {
+                "device_id": "6888",
+                "frequency": 2000,
+                "label": "test-device",
+                "protocol": "MQTT",
+                "template": 1
+            }
+
 + Response 200 (application/json)
-  {
-    "device": {
-      "updated": "2017-10-06T11:00:49.127223+00:00",
-      "protocol": "MQTT",
-      "created": "2017-10-06T10:48:18.220313+00:00",
-      "label": "test-device",
-      "frequency": 2000,
-      "attrs": [
-        {
-          "template_id": "1",
-          "created": "2017-10-06T10:48:15.795690+00:00",
-          "label": "custom.a",
-          "value_type": "string",
-          "type": "dynamic",
-          "id": 1
-        },
-        {
-          "template_id": "1",
-          "created": "2017-10-06T10:48:15.797245+00:00",
-          "label": "custom.b",
-          "value_type": "string",
-          "type": "dynamic",
-          "id": 2
-        },
-        {
-          "template_id": "1",
-          "created": "2017-10-06T10:48:15.797639+00:00",
-          "label": "custom.c",
-          "value_type": "string",
-          "type": "dynamic",
-          "id": 3
-        }
-      ],
-      "template": 1,
-      "device_id": "6888"
-    },
-    "message": "device updated"
-  }
+
+            {
+                "device": {
+                    "updated": "2017-10-06T11:00:49.127223+00:00",
+                    "protocol": "MQTT",
+                    "created": "2017-10-06T10:48:18.220313+00:00",
+                    "label": "test-device",
+                    "frequency": 2000,
+                    "attrs": [
+                        {
+                            "template_id": "1",
+                            "created": "2017-10-06T10:48:15.795690+00:00",
+                            "label": "custom.a",
+                            "value_type": "string",
+                            "type": "dynamic",
+                            "id": 1
+                        },
+                        {
+                            "template_id": "1",
+                            "created": "2017-10-06T10:48:15.797245+00:00",
+                            "label": "custom.b",
+                            "value_type": "string",
+                            "type": "dynamic",
+                            "id": 2
+                        },
+                        {
+                            "template_id": "1",
+                            "created": "2017-10-06T10:48:15.797639+00:00",
+                            "label": "custom.c",
+                            "value_type": "string",
+                            "type": "dynamic",
+                            "id": 3
+                        }
+                    ],
+                    "template": 1,
+                    "device_id": "6888"
+                },
+                "message": "device updated"
+            }
+
 + Response 400 (application/json)
-  {"status" : "unknown request format"}
+
+            {"status" : "unknown request format"}
+
 + Response 404 (application/json)
-  {"status" : "given device was not found"}
+
+            {"status" : "given device was not found"}
+
 + Response 500 (application/json)
-  {"status" : "failed to update device configuration"}
+
+            {"status" : "failed to update device configuration"}
 
 
 
