@@ -35,19 +35,10 @@ Register a new template
                         "value_type": "float"
                     },
                     {
-                        "label": "pressure",
-                        "type": "dynamic",
-                        "value_type": "float"
-                    },
-                    {
-                        "label": "led",
-                        "type": "dynamic",
-                        "value_type": "bool"
-                    },
-                    {
-                        "label": "fan",
-                        "type": "dynamic",
-                        "value_type": "bool"
+                        "label" : "model-id",
+                        "type" : "static",
+                        "value_type" : "string",
+                        "static_value" : "model-001"
                     }
                 ]
             }
@@ -60,7 +51,7 @@ Register a new template
                     "created": "2017-12-20T18:38:48.983342+00:00",
                     "attrs": [
                         {
-                            "template_id": "3",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:38:48.985280+00:00",
                             "label": "temperature",
                             "value_type": "float",
@@ -68,31 +59,16 @@ Register a new template
                             "id": 9
                         },
                         {
-                            "template_id": "3",
-                            "created": "2017-12-20T18:38:48.986279+00:00",
-                            "label": "pressure",
-                            "value_type": "float",
-                            "type": "dynamic",
-                            "id": 10
-                        },
-                        {
-                            "template_id": "3",
-                            "created": "2017-12-20T18:38:48.987201+00:00",
-                            "label": "led",
-                            "value_type": "bol",
-                            "type": "dynamic",
-                            "id": 11
-                        },
-                        {
-                            "template_id": "3",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:38:48.988103+00:00",
-                            "label": "fan",
-                            "value_type": "bool",
-                            "type": "dynamic",
-                            "id": 12
+                            "label": "model-id",
+                            "value_type": "string",
+                            "type": "static",
+                            "static_value" : "model-001",
+                            "id": 10
                         }
                     ],
-                    "id": 3,
+                    "id": "83af",
                     "label": "SensorModel"
                 }
             }
@@ -130,40 +106,25 @@ Get the full list of templates with all their associated attributes.
                     {
                         "attrs": [
                             {
-                                "created": "2017-12-20T18:42:21.089367+00:00",
-                                "id": 13,
+                                "created": "2017-12-27T15:22:13.331950+00:00",
+                                "id": 9,
                                 "label": "temperature",
-                                "template_id": "4",
+                                "template_id": "83af",
                                 "type": "dynamic",
                                 "value_type": "float"
                             },
                             {
-                                "created": "2017-12-20T18:42:21.090601+00:00",
-                                "id": 14,
-                                "label": "pressure",
-                                "template_id": "4",
-                                "type": "dynamic",
-                                "value_type": "float"
-                            },
-                            {
-                                "created": "2017-12-20T18:42:21.091596+00:00",
-                                "id": 15,
-                                "label": "led",
-                                "template_id": "4",
-                                "type": "dynamic",
-                                "value_type": "bool"
-                            },
-                            {
-                                "created": "2017-12-20T18:42:21.092641+00:00",
-                                "id": 16,
-                                "label": "fan",
-                                "template_id": "4",
-                                "type": "dynamic",
-                                "value_type": "bool"
+                                "created": "2017-12-27T15:22:13.334498+00:00",
+                                "id": 10,
+                                "label": "model-id",
+                                "static_value": "model-001",
+                                "template_id": "83af",
+                                "type": "static",
+                                "value_type": "string"
                             }
                         ],
-                        "created": "2017-12-20T18:42:21.087782+00:00",
-                        "id": 4,
+                        "created": "2017-12-27T15:22:13.330246+00:00",
+                        "id": "83af",
                         "label": "SensorModel"
                     }
                 ]
@@ -183,44 +144,30 @@ Removes a template. If any device is based on the template being removed, then a
                 "removed": {
                     "attrs": [
                         {
-                            "created": "2017-12-20T18:42:21.089367+00:00",
-                            "id": 13,
+                            "created": "2017-12-27T15:22:13.331950+00:00",
+                            "id": 9,
                             "label": "temperature",
-                            "template_id": "4",
+                            "template_id": "83af",
                             "type": "dynamic",
                             "value_type": "float"
                         },
                         {
-                            "created": "2017-12-20T18:42:21.090601+00:00",
-                            "id": 14,
-                            "label": "pressure",
-                            "template_id": "4",
-                            "type": "dynamic",
-                            "value_type": "float"
-                        },
-                        {
-                            "created": "2017-12-20T18:42:21.091596+00:00",
-                            "id": 15,
-                            "label": "led",
-                            "template_id": "4",
-                            "type": "dynamic",
-                            "value_type": "bool"
-                        },
-                        {
-                            "created": "2017-12-20T18:42:21.092641+00:00",
-                            "id": 16,
-                            "label": "fan",
-                            "template_id": "4",
-                            "type": "dynamic",
-                            "value_type": "bool"
+                            "created": "2017-12-27T15:22:13.334498+00:00",
+                            "id": 10,
+                            "label": "model-id",
+                            "static_value": "model-001",
+                            "template_id": "83af",
+                            "type": "static",
+                            "value_type": "string"
                         }
                     ],
-                    "created": "2017-12-20T18:42:21.087782+00:00",
-                    "id": 4,
+                    "created": "2017-12-27T15:22:13.330246+00:00",
+                    "id": "83af",
                     "label": "SensorModel"
                 },
                 "result": "ok"
             }
+
 
 + Response 404 (application/json)
 
@@ -237,40 +184,25 @@ Retrieves all information from a specific template
             {
                 "attrs": [
                     {
-                        "created": "2017-12-20T18:42:21.089367+00:00",
-                        "id": 13,
+                        "created": "2017-12-27T15:27:35.410095+00:00",
+                        "id": 9,
                         "label": "temperature",
-                        "template_id": "4",
+                        "template_id": "83af",
                         "type": "dynamic",
                         "value_type": "float"
                     },
                     {
-                        "created": "2017-12-20T18:42:21.090601+00:00",
-                        "id": 14,
-                        "label": "pressure",
-                        "template_id": "4",
-                        "type": "dynamic",
-                        "value_type": "float"
-                    },
-                    {
-                        "created": "2017-12-20T18:42:21.091596+00:00",
-                        "id": 15,
-                        "label": "led",
-                        "template_id": "4",
-                        "type": "dynamic",
-                        "value_type": "bool"
-                    },
-                    {
-                        "created": "2017-12-20T18:42:21.092641+00:00",
-                        "id": 16,
-                        "label": "fan",
-                        "template_id": "4",
-                        "type": "dynamic",
-                        "value_type": "bool"
+                        "created": "2017-12-27T15:27:35.411815+00:00",
+                        "id": 10,
+                        "label": "model-id",
+                        "static_value": "model-001",
+                        "template_id": "83af",
+                        "type": "static",
+                        "value_type": "string"
                     }
                 ],
-                "created": "2017-12-20T18:42:21.087782+00:00",
-                "id": 4,
+                "created": "2017-12-27T15:27:35.408714+00:00",
+                "id": "83af",
                 "label": "SensorModel"
             }
     
@@ -313,11 +245,6 @@ All devices based on this template will be also updated.
                         "label": "fan",
                         "type": "dynamic",
                         "value_type": "bool"
-                    },
-                    {
-                        "label": "fan2",
-                        "type": "dynamic",
-                        "value_type": "bool"
                     }
                 ]
             }
@@ -330,7 +257,7 @@ All devices based on this template will be also updated.
                     "created": "2017-12-20T18:52:34.361828+00:00",
                     "attrs": [
                         {
-                            "template_id": "6",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:53:19.808891+00:00",
                             "label": "temperature",
                             "value_type": "float",
@@ -338,7 +265,7 @@ All devices based on this template will be also updated.
                             "id": 30
                         },
                         {
-                            "template_id": "6",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:53:19.809999+00:00",
                             "label": "pressure",
                             "value_type": "float",
@@ -346,7 +273,7 @@ All devices based on this template will be also updated.
                             "id": 31
                         },
                         {
-                            "template_id": "6",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:53:19.810846+00:00",
                             "label": "led",
                             "value_type": "bool",
@@ -354,23 +281,15 @@ All devices based on this template will be also updated.
                             "id": 32
                         },
                         {
-                            "template_id": "6",
+                            "template_id": "83af",
                             "created": "2017-12-20T18:53:19.811781+00:00",
                             "label": "fan",
                             "value_type": "bool",
                             "type": "dynamic",
                             "id": 33
-                        },
-                        {
-                            "template_id": "6",
-                            "created": "2017-12-20T18:53:19.812699+00:00",
-                            "label": "fan2",
-                            "value_type": "bool",
-                            "type": "dynamic",
-                            "id": 34
                         }
                     ],
-                    "id": 6,
+                    "id": "83af",
                     "label": "SensorModel"
                 },
                 "result": "ok"
@@ -404,36 +323,36 @@ In this example, there is only one template (ID 1).
                 "devices": [
                     {
                         "attrs": {
-                            "1": [
+                            "83af": [
                                 {
                                     "created": "2017-12-20T18:14:43.994796+00:00",
-                                    "id": 1,
+                                    "id": 30,
                                     "label": "tag_temperature",
-                                    "template_id": "1",
+                                    "template_id": "83af",
                                     "type": "dynamic",
                                     "value_type": "float"
                                 },
                                 {
                                     "created": "2017-12-20T18:14:44.014065+00:00",
-                                    "id": 2,
+                                    "id": 31,
                                     "label": "tag_pressure",
-                                    "template_id": "1",
+                                    "template_id": "83af",
                                     "type": "dynamic",
                                     "value_type": "float"
                                 },
                                 {
                                     "created": "2017-12-20T18:14:44.015474+00:00",
-                                    "id": 3,
+                                    "id": 32,
                                     "label": "tag_led",
-                                    "template_id": "1",
+                                    "template_id": "83af",
                                     "type": "dynamic",
                                     "value_type": "bool"
                                 },
                                 {
                                     "created": "2017-12-20T18:14:44.016804+00:00",
-                                    "id": 4,
+                                    "id": 33,
                                     "label": "tag_fan",
-                                    "template_id": "1",
+                                    "template_id": "83af",
                                     "type": "dynamic",
                                     "value_type": "bool"
                                 }
@@ -443,7 +362,7 @@ In this example, there is only one template (ID 1).
                         "id": "10cf",
                         "label": "sensor-4",
                         "templates": [
-                            1
+                            "83af"
                         ]
                     }
                 ],
@@ -467,7 +386,7 @@ Register a new device. In this example, there is already a template (ID 1) which
 
             {
                 "templates": [
-                    "1"
+                    "83af"
                 ],
                 "label": "sensor-4",
                 "protocol": "MQTT"
@@ -482,38 +401,38 @@ Register a new device. In this example, there is already a template (ID 1) which
                     ],
                     "created": "2017-12-20T18:15:08.864677+00:00",
                     "attrs": {
-                        "1": [
+                        "83af": [
                             {
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "created": "2017-12-20T18:14:43.994796+00:00",
                                 "label": "tag_temperature",
                                 "value_type": "float",
                                 "type": "dynamic",
-                                "id": 1
+                                "id": 30
                             },
                             {
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "created": "2017-12-20T18:14:44.014065+00:00",
                                 "label": "tag_pressure",
                                 "value_type": "float",
                                 "type": "dynamic",
-                                "id": 2
+                                "id": 31
                             },
                             {
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "created": "2017-12-20T18:14:44.015474+00:00",
                                 "label": "tag_led",
                                 "value_type": "bool",
                                 "type": "dynamic",
-                                "id": 3
+                                "id": 32
                             },
                             {
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "created": "2017-12-20T18:14:44.016804+00:00",
                                 "label": "tag_fan",
                                 "value_type": "bool",
                                 "type": "dynamic",
-                                "id": 4
+                                "id": 33
                             }
                         ]
                     },
@@ -569,36 +488,36 @@ Retrieves all information from a specific device
 
             {
                 "attrs": {
-                    "1": [
+                    "83af": [
                         {
                             "created": "2017-12-20T18:14:43.994796+00:00",
-                            "id": 1,
+                            "id": 30,
                             "label": "tag_temperature",
-                            "template_id": "1",
+                            "template_id": "83af",
                             "type": "dynamic",
                             "value_type": "float"
                         },
                         {
                             "created": "2017-12-20T18:14:44.014065+00:00",
-                            "id": 2,
+                            "id": 31,
                             "label": "tag_pressure",
-                            "template_id": "1",
+                            "template_id": "83af",
                             "type": "dynamic",
                             "value_type": "float"
                         },
                         {
                             "created": "2017-12-20T18:14:44.015474+00:00",
-                            "id": 3,
+                            "id": 32,
                             "label": "tag_led",
-                            "template_id": "1",
+                            "template_id": "83af",
                             "type": "dynamic",
                             "value_type": "bool"
                         },
                         {
                             "created": "2017-12-20T18:14:44.016804+00:00",
-                            "id": 4,
+                            "id": 33,
                             "label": "tag_fan",
-                            "template_id": "1",
+                            "template_id": "83af",
                             "type": "dynamic",
                             "value_type": "bool"
                         }
@@ -608,7 +527,7 @@ Retrieves all information from a specific device
                 "id": "10cf",
                 "label": "sensor-4",
                 "templates": [
-                    1
+                    "83af"
                 ]
             }
 
@@ -627,36 +546,36 @@ Removes a device
             {
                 "removed_device": {
                     "attrs": {
-                        "1": [
+                        "83af": [
                             {
                                 "created": "2017-12-20T18:14:43.994796+00:00",
-                                "id": 1,
+                                "id": 30,
                                 "label": "tag_temperature",
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "type": "dynamic",
                                 "value_type": "float"
                             },
                             {
                                 "created": "2017-12-20T18:14:44.014065+00:00",
-                                "id": 2,
+                                "id": 31,
                                 "label": "tag_pressure",
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "type": "dynamic",
                                 "value_type": "float"
                             },
                             {
                                 "created": "2017-12-20T18:14:44.015474+00:00",
-                                "id": 3,
+                                "id": 32,
                                 "label": "tag_led",
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "type": "dynamic",
                                 "value_type": "bool"
                             },
                             {
                                 "created": "2017-12-20T18:14:44.016804+00:00",
-                                "id": 4,
+                                "id": 33,
                                 "label": "tag_fan",
-                                "template_id": "1",
+                                "template_id": "83af",
                                 "type": "dynamic",
                                 "value_type": "bool"
                             }
@@ -666,7 +585,7 @@ Removes a device
                     "id": "10cf",
                     "label": "sensor-4",
                     "templates": [
-                        1
+                        "83af"
                     ]
                 },
                 "result": "ok"
@@ -694,7 +613,7 @@ Replaces all attributes from a specific device.
                 "frequency": 2000,
                 "label": "test-device",
                 "protocol": "MQTT",
-                "template": 1
+                "template": "83af"
             }
 
 + Response 200 (application/json)
@@ -708,7 +627,7 @@ Replaces all attributes from a specific device.
                     "frequency": 2000,
                     "attrs": [
                         {
-                            "template_id": "1",
+                            "template_id": "83af",
                             "created": "2017-10-06T10:48:15.795690+00:00",
                             "label": "custom.a",
                             "value_type": "string",
