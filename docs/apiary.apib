@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: http://localhost:8000
+HOST: http://localhost:5000
 
 # Device Management API
 
@@ -458,7 +458,7 @@ Register a new device. In this example, there is already a template (ID 1) which
 
             {"status" : "device has missing fields"}
 
-+ Response 304 (application/json)
++ Response 401 (application/json)
 
             {"status" : "missing authorization info"}
 
