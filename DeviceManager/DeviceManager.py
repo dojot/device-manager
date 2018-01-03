@@ -97,7 +97,10 @@ def create_device():
         try:
             count = int(request.args.get('count', '1'))
             clength = len(str(count))
-        except Exception as e:
+            verbose = request.args.get('verbose', 'false') in ['true', '1', 'True']
+            if (verbose and count != 1):
+                raise HTTPRequestError(400, "Verbose can only be used for single device creation")
+        except ValueError as e:
             LOGGER.error(e)
             raise HTTPRequestError(400, "If provided, count must be integer")
         result = None
@@ -128,7 +131,7 @@ def create_device():
         except IntegrityError as error:
             handle_consistency_exception(error)
 
-        if count == 1:
+        if verbose:
             result = json.dumps({
                 'message': 'device created',
                 'device': full_device

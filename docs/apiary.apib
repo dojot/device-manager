@@ -312,7 +312,7 @@ All these endpoints are related to CRUD operations over devices.
 Get the full list of devices with all their associated attributes.
 Each attribute from *attrs* is the template ID from where the attributes came from.
 In this example, there is only one template (ID 1).
-+ Params
++ Parameters
   + page_size: 20 (integer, optional)
   + page_num: 1 (integer, optional)
 + Request
@@ -378,7 +378,7 @@ In this example, there is only one template (ID 1).
             }
 ### Get the current list of devices associated with given template [GET /device/template/{templateid}{?page_size,page_num}]
 Get the full list of devices that belong to a given template..
-+ Params
++ Parameters
   + templateid: 1 (integer, required)
   + page_size: 20 (integer, optional)
   + page_num: 1 (integer, optional)
@@ -444,10 +444,11 @@ Get the full list of devices that belong to a given template..
                 }
             }
 
-### Register a new device [POST /device{?count}]
+### Register a new device [POST /device{?count,verbose}]
 Register a new device. In this example, there is already a template (ID 1) which describes all the attributes to be applied to this device.
 + Parameters
-    + count: 1 (integer, optional)
+    + count: 3 (integer, optional)
+    + verbose: False (boolean, optional) Set to true if full device description is to be returned.
 + Request (application/json)
     + Headers
 
@@ -456,62 +457,30 @@ Register a new device. In this example, there is already a template (ID 1) which
     + Body
 
             {
-                "templates": [
-                    "83af"
-                ],
-                "label": "sensor-4",
-                "protocol": "MQTT"
+              "label": "test_device",
+              "templates": [1]
             }
 
 + Response 200 (application/json)
 
             {
-                "device": {
-                    "templates": [
-                        1
-                    ],
-                    "created": "2017-12-20T18:15:08.864677+00:00",
-                    "attrs": {
-                        "83af": [
-                            {
-                                "template_id": "83af",
-                                "created": "2017-12-20T18:14:43.994796+00:00",
-                                "label": "tag_temperature",
-                                "value_type": "float",
-                                "type": "dynamic",
-                                "id": 30
-                            },
-                            {
-                                "template_id": "83af",
-                                "created": "2017-12-20T18:14:44.014065+00:00",
-                                "label": "tag_pressure",
-                                "value_type": "float",
-                                "type": "dynamic",
-                                "id": 31
-                            },
-                            {
-                                "template_id": "83af",
-                                "created": "2017-12-20T18:14:44.015474+00:00",
-                                "label": "tag_led",
-                                "value_type": "bool",
-                                "type": "dynamic",
-                                "id": 32
-                            },
-                            {
-                                "template_id": "83af",
-                                "created": "2017-12-20T18:14:44.016804+00:00",
-                                "label": "tag_fan",
-                                "value_type": "bool",
-                                "type": "dynamic",
-                                "id": 33
-                            }
-                        ]
-                    },
-                    "id": "10cf",
-                    "label": "sensor-4"
+              "devices": [
+                {
+                  "id": "68fc",
+                  "label": "test_device_0"
                 },
-                "message": "device created"
+                {
+                  "id": "94dc",
+                  "label": "test_device_1"
+                },
+                {
+                  "id": "1ebc",
+                  "label": "test_device_2"
+                }
+              ],
+              "message": "devices created"
             }
+
 
 + Response 400 (application/json)
 
