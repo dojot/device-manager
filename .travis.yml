@@ -1,0 +1,17 @@
+language: python
+
+before_script:
+  - npm install -g aglio
+
+script:
+  - cd docs
+  - aglio -i ./apiary.apib -o apis.html
+
+deploy:
+  local_dir: ${TRAVIS_BUILD_DIR}/docs
+  target_branch: gh-pages
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+#  on:
+#    branch: master
