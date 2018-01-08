@@ -1,5 +1,6 @@
 import logging
 import json
+from conf import CONFIG
 from kafka import KafkaProducer
 from kafka.errors import KafkaTimeoutError
 
@@ -29,7 +30,8 @@ class NotificationMessage:
         return {"event": self.event, "data": self.data, "meta": self.meta}
 
 
-kf_prod = KafkaProducer(value_serializer=lambda v: json.dumps(v).encode('utf-8'), bootstrap_servers='kafka:9092')
+kafka_address = CONFIG.kafka_host + ':' + CONFIG.kafka_port
+kf_prod = KafkaProducer(value_serializer=lambda v: json.dumps(v).encode('utf-8'), bootstrap_servers=kafka_address)
 
 
 def send_notification(event, device, meta):
