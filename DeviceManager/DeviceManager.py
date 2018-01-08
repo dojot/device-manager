@@ -10,7 +10,7 @@ from flask import request
 from flask import make_response
 from flask import Blueprint
 from utils import *
-from BackendHandler import BackendHandler, IotaHandler, PersistenceHandler, OrionHandler, KafkaHandler
+from BackendHandler import OrionHandler, KafkaHandler
 from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
@@ -25,12 +25,14 @@ LOGGER = logging.getLogger('device-manager.' + __name__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.INFO)
 
+
 def serialize_full_device(orm_device):
     data = device_schema.dump(orm_device).data
     data['attrs'] = {}
     for template in orm_device.templates:
         data['attrs'][template.id] = attr_list_schema.dump(template.attrs).data
     return data
+
 
 def auto_create_template(json_payload, new_device):
     if ('attrs' in json_payload) and (new_device.templates is None):
@@ -39,10 +41,12 @@ def auto_create_template(json_payload, new_device):
         new_device.templates = [device_template]
         load_attrs(json_payload['attrs'], device_template, DeviceAttr, db)
 
+
 def parse_template_list(template_list, new_device):
     new_device.templates = []
     for templateid in template_list:
         new_device.templates.append(assert_template_exists(templateid))
+
 
 def generate_device_id():
     # TODO this is awful, makes me sad, but for now also makes demoing easier
@@ -57,6 +61,7 @@ def generate_device_id():
             return new_id
 
     raise HTTPRequestError(500, "Failed to generate unique device_id")
+
 
 @device.route('/device', methods=['GET'])
 def get_devices():
@@ -89,6 +94,7 @@ def get_devices():
         else:
             return format_response(e.error_code, e.message)
 
+
 @device.route('/device', methods=['POST'])
 def create_device():
     """ Creates and configures the given device (in json) """
@@ -98,18 +104,18 @@ def create_device():
             count = int(request.args.get('count', '1'))
             clength = len(str(count))
             verbose = request.args.get('verbose', 'false') in ['true', '1', 'True']
-            if (verbose and count != 1):
+            if verbose and count != 1:
                 raise HTTPRequestError(400, "Verbose can only be used for single device creation")
         except ValueError as e:
             LOGGER.error(e)
             raise HTTPRequestError(400, "If provided, count must be integer")
-        result = None
+
         devices = []
         for i in range(0, count):
             device_data, json_payload = parse_payload(request, device_schema)
             device_data['id'] = generate_device_id()
             device_data['label'] = device_data['label'] + "_%0*d" % (clength, i)
-            device_data.pop('templates', None) # handled separatly by parse_template_list
+            device_data.pop('templates', None)  # handled separately by parse_template_list
             orm_device = Device(**device_data)
             parse_template_list(json_payload.get('templates', []), orm_device)
             auto_create_template(json_payload, orm_device)
@@ -160,6 +166,7 @@ def create_device():
         else:
             return format_response(e.error_code, e.message)
 
+
 @device.route('/device/<deviceid>', methods=['GET'])
 def get_device(deviceid):
     try:
@@ -171,6 +178,7 @@ def get_device(deviceid):
             return make_response(json.dumps(e.message), e.error_code)
         else:
             return format_response(e.error_code, e.message)
+
 
 @device.route('/device/<deviceid>', methods=['DELETE'])
 def remove_device(deviceid):
@@ -188,6 +196,7 @@ def remove_device(deviceid):
             return make_response(json.dumps(e.message), e.error_code)
         else:
             return format_response(e.error_code, e.message)
+
 
 @device.route('/device/<deviceid>', methods=['PUT'])
 def update_device(deviceid):
@@ -247,6 +256,7 @@ def update_device(deviceid):
         else:
             return format_response(e.error_code, e.message)
 
+
 @device.route('/device/<deviceid>/attrs', methods=['PUT'])
 def configure_device(deviceid):
     try:
@@ -270,6 +280,7 @@ def configure_device(deviceid):
             return make_response(json.dumps(e.message), e.error_code)
         else:
             return format_response(e.error_code, e.message)
+
 
 # Convenience template ops
 @device.route('/device/<deviceid>/template/<templateid>', methods=['POST'])
@@ -296,6 +307,7 @@ def add_template_to_device(deviceid, templateid):
         else:
             return format_response(e.error_code, e.message)
 
+
 @device.route('/device/<deviceid>/template/<templateid>', methods=['DELETE'])
 def remove_template_from_device(deviceid, templateid):
     """ removes given template from device """
@@ -316,6 +328,7 @@ def remove_template_from_device(deviceid, templateid):
             return make_response(json.dumps(e.message), e.error_code)
         else:
             return format_response(e.error_code, e.message)
+
 
 @device.route('/device/template/<templateid>', methods=['GET'])
 def get_by_template(templateid):
@@ -348,5 +361,6 @@ def get_by_template(templateid):
             return make_response(json.dumps(e.message), e.error_code)
         else:
             return format_response(e.error_code, e.message)
+
 
 app.register_blueprint(device)

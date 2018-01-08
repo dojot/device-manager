@@ -10,6 +10,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = CONFIG.get_db_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+
 class DeviceTemplate(db.Model):
     __tablename__ = 'templates'
 
@@ -23,6 +24,7 @@ class DeviceTemplate(db.Model):
 
     def __repr__(self):
         return "<Template(label='%s')>" % self.label
+
 
 class DeviceAttr(db.Model):
     __tablename__ = 'attrs'
@@ -43,6 +45,7 @@ class DeviceAttr(db.Model):
         return "<Attr(label='%s', type='%s', value_type='%s')>" % (
             self.label, self.type, self.value_type)
 
+
 class Device(db.Model):
     __tablename__ = 'devices'
 
@@ -57,12 +60,14 @@ class Device(db.Model):
     persistence = db.Column(db.String(128))
 
     def __repr__(self):
-        return "<Device(label='%s')>" % (self.label)
+        return "<Device(label='%s')>" % self.label
+
 
 class DeviceTemplateMap(db.Model):
     __tablename__ = 'device_template'
     device_id = db.Column(db.String(4), db.ForeignKey('devices.id'), primary_key=True, index=True)
     template_id = db.Column(db.Integer, db.ForeignKey('templates.id'), primary_key=True, index=True)
+
 
 def assert_device_exists(device_id):
     try:
@@ -70,17 +75,20 @@ def assert_device_exists(device_id):
     except sqlalchemy.orm.exc.NoResultFound:
         raise HTTPRequestError(404, "No such device: %s" % device_id)
 
+
 def assert_template_exists(template_id):
     try:
         return DeviceTemplate.query.filter_by(id=template_id).one()
     except sqlalchemy.orm.exc.NoResultFound:
         raise HTTPRequestError(404, "No such template: %s" % template_id)
 
+
 def assert_device_relation_exists(device_id, template_id):
     try:
         return DeviceTemplateMap.query.filter_by(device_id=device_id, template_id=template_id).one()
     except sqlalchemy.orm.exc.NoResultFound:
         raise HTTPRequestError(404, "Device %s is not associated with template %s" % (device_id, template_id))
+
 
 def handle_consistency_exception(error):
     # message = error.message.replace('\n','')

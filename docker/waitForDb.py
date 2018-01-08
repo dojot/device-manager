@@ -5,11 +5,12 @@ from time import sleep
 import argparse
 from DeviceManager.conf import CONFIG
 
-def wait_for_db(args):
+
+def wait_for_db(db_args):
     """ blocks execution until database is ready """
 
     print 'Waiting for database to become available...'
-    retries = args.retries
+    retries = db_args.retries
     while retries > 0:
         try:
             connection = psycopg2.connect(user=CONFIG.dbuser, password=CONFIG.dbpass,
@@ -27,13 +28,14 @@ def wait_for_db(args):
             print "Database connection error | %s" % e.pgerror
 
         retries -= 1
-        print('Will try again in ' + str(args.wait))
-        sleep(args.wait)
+        print('Will try again in ' + str(db_args.wait))
+        sleep(db_args.wait)
 
     print('Postgres is ready')
 
+
 if __name__ == '__main__':
-    desc= """Waits for database"""
+    desc = """Waits for database"""
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('-w', '--wait', help="", default=5)
     parser.add_argument('-r', '--retries', help="", default=20)

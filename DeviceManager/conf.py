@@ -2,6 +2,7 @@
 
 import os
 
+
 class Config(object):
     """ Abstracts configuration, either retrieved from environment or from ctor arguments """
     def __init__(self,
@@ -25,5 +26,6 @@ class Config(object):
                                          self.dbhost, self.dbname)
         else:
             return "%s://%s@%s/%s" % (self.dbdriver, self.dbuser, self.dbhost, self.dbname)
+
 
 CONFIG = Config()

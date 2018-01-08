@@ -1,9 +1,5 @@
-import os
-import json
 import logging
-from time import time
 from flask import Flask, Blueprint, request, make_response
-from sqlalchemy.sql import text
 from sqlalchemy.exc import IntegrityError
 
 from DatabaseModels import *
@@ -18,6 +14,7 @@ LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.INFO)
 
 template = Blueprint('template', __name__)
+
 
 @template.route('/template', methods=['GET'])
 def get_templates():
@@ -45,6 +42,7 @@ def get_templates():
         else:
             return format_response(e.error_code, e.message)
 
+
 @template.route('/template', methods=['POST'])
 def create_template():
     try:
@@ -70,6 +68,7 @@ def create_template():
         else:
             return format_response(error.error_code, error.message)
 
+
 @template.route('/template/<templateid>', methods=['GET'])
 def get_template(templateid):
     try:
@@ -83,6 +82,7 @@ def get_template(templateid):
         else:
             return format_response(e.error_code, e.message)
 
+
 @template.route('/template/<templateid>', methods=['DELETE'])
 def remove_template(templateid):
     try:
@@ -93,7 +93,7 @@ def remove_template(templateid):
         db.session.delete(tpl)
         db.session.commit()
 
-        results = json.dumps({'result': 'ok', 'removed':json_template})
+        results = json.dumps({'result': 'ok', 'removed': json_template})
         return make_response(results, 200)
     except HTTPRequestError as e:
         if isinstance(e.message, dict):
