@@ -1,4 +1,3 @@
-import time
 import json
 import threading
 from kafka import KafkaConsumer, KafkaProducer
@@ -14,6 +13,13 @@ from .DatabaseModels import Device
 from .DatabaseHandler import db
 from .app import app
 
+from DeviceManager.Logger import Log
+from datetime import datetime
+import time
+
+
+timeStamp = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y:%H:%M:%S')
+LOGGER = Log().color_log()
 
 class Listener(ConsumerRebalanceListener):
     def __init__(self, monitor):
@@ -21,11 +27,11 @@ class Listener(ConsumerRebalanceListener):
         self.__collectors = {}
 
     def on_partitions_assigned(self, assigned):
-        # print('got listener event {} {}'.format(len(assigned), assigned))
+        LOGGER.debug(f'[{timeStamp}] |{__name__}| got listener event {len(assigned)} {assigned}')
         for partition in assigned:
             self.__monitor.collect(partition.partition)
             if partition not in self.__collectors.keys():
-                # print('will start iterator')
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| will start iterator")
                 self.__monitor.begin(partition.partition)
 
 class StatusMonitor:
@@ -58,24 +64,24 @@ class StatusMonitor:
     def run(self):
         group_id="device-manager.monitor#" + str(uuid.uuid4())         
         start = time.time()
-        # print('will create consumer {} {} {}'.format(CONFIG.get_kafka_url(), group_id, self.topic))
+        LOGGER.debug(F'[{timeStamp}] |{__name__}| will create consumer {CONFIG.get_kafka_url()} {group_id} {self.topic}')
         consumer = KafkaConsumer(bootstrap_servers=CONFIG.get_kafka_url(), group_id=group_id)
         consumer.subscribe(topics=[self.topic], listener=Listener(self))
         StatusMonitor.wait_init(consumer)
-        # print('kafka consumer created {} - {}'.format(self.topic, time.time() - start))
-        # print(consumer.assignment())
+        LOGGER.debug(f'[{timeStamp}] |{__name__}| kafka consumer created {self.topic} - {time.time() - start}')
+        LOGGER.debug(consumer.assignment())
         for message in consumer:
-            # print("Got kafka event [{}] {}".format(self.topic, message))
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Got kafka event [{self.topic}] {message}")
             data = None
             try:
                 data = json.loads(message.value)
             except Exception as error:
-                print("Received message is not valid json {}".format(error))
+                LOGGER.error(f"[{timeStamp}] |{__name__}| Received message is not valid json {error}")
                 continue
 
             metadata = data.get('metadata', None)
             if metadata is None:
-                print('Invalid kafka event detected - no metadata included')
+                LOGGER.error(f'[{timeStamp}] |{__name__}| Invalid kafka event detected - no metadata included')
                 continue
 
             reason = metadata.get('reason', None)
@@ -85,7 +91,7 @@ class StatusMonitor:
             deviceid = metadata.get('deviceid', None)
             tenant = metadata.get('tenant', None)
             if (deviceid is None) or (tenant is None):
-                print('Missing device identification from event')
+                LOGGER.warning(f"[{timeStamp}] |{__name__}| Missing device identification from event")
                 continue
 
             self.set_online(tenant, deviceid, message.partition, metadata.get('exp', None))
@@ -134,7 +140,7 @@ class StatusMonitor:
         if exp is None:
             exp = StatusMonitor.default_exp(tenant, device)
 
-        print('will set {}:{} online for {}s'.format(tenant, device, exp))
+        LOGGER.info(f'[{timeStamp}] |{__name__}| will set {tenant}:{device} online for {exp}s')
 
         key = StatusMonitor.get_key_for(tenant, device, partition)
         old_ts = self.redis.get(key)
@@ -153,13 +159,14 @@ class StatusMonitor:
         """
         Periodically invoke iterator
         """
-        # print('starting iterator')
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| starting iterator")
         while times != 0:
             # now = time.time()
             # print('[times] gc is about to run {}'.format(now - self.lastgc))
             # self.lastgc = now
             self.collect(partition)
             time.sleep(2)
+            # LOGGER.debug('[{}] |{}| [times] gc is about to run {}'.format(timeStamp, __name__, now - self.lastgc))
             if times > 0:
                 times -= 1
 
@@ -171,27 +178,27 @@ class StatusMonitor:
         for i in data:
             if i is not None:
                 devices.append(i.decode('utf-8'))
-        # print('scan {} {} {}'.format(match, cursor, data))
+                LOGGER.debug(f'[{timeStamp}] |{__name__}| scan {match} {cursor} {data}')
         while cursor != 0:
             cursor, data = self.redis.scan(cursor, match, count=1000)
             for i in data:
                 if i is not None:
                     devices.append(i.decode('utf-8'))
-            # print('scan {} {}'.format(cursor, data))
+                    LOGGER.debug(f'[{timeStamp}] |{__name__}| scan {cursor} {data}')
 
-        # print('gc devices {}'.format(devices))
         now = time.time()
         for device in devices:
             try:
+                LOGGER.debug(f'[{timeStamp}] |{__name__}| gc devices {devices}')
                 exp = float(self.redis.get(device).decode('utf-8'))
-                # print('will check {} {}'.format(device, exp))
+                LOGGER.debug(f'[{timeStamp}] |{__name__}| will check {device} {exp}')
                 if now > exp:
                     self.redis.delete(device)
-                    print('device {} offline'.format(device))
+                    LOGGER.debug(f'[{timeStamp}] |{__name__}| device {device} offline')
                     parsed = device.split(':')
                     self.notify(parsed[1],parsed[2],'offline')
             except Exception as error:
-                print('Failed to process device "{}": {}'.format(device, error))
+                LOGGER.error(f'[{timeStamp}] |{__name__}| Failed to process device "{device}": {error}')
 
     @staticmethod
     def get_status(tenant, device=None):

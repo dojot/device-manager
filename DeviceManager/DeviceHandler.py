@@ -3,9 +3,10 @@
     FIWARE backend
 """
 
-import logging
 import re
+import logging
 import json
+import time
 from datetime import datetime
 import secrets
 from flask import request, jsonify, Blueprint, make_response
@@ -29,12 +30,12 @@ from DeviceManager.SerializationModels import parse_payload, load_attrs
 from DeviceManager.TenancyManager import init_tenant_context, init_tenant_context2
 from DeviceManager.app import app
 from .StatusMonitor import StatusMonitor
+from DeviceManager.Logger import Log
 
 device = Blueprint('device', __name__)
 
-LOGGER = logging.getLogger('device-manager.' + __name__)
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.INFO)
+timeStamp = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y:%H:%M:%S')
+LOGGER = Log().color_log()
 
 def serialize_override_attrs(orm_overrides, attrs):
     for override in orm_overrides:
@@ -76,6 +77,7 @@ def serialize_full_device(orm_device, tenant, sensitive_data=False, status_cache
     return data
 
 def find_template(template_list, id):
+    LOGGER.debug(f"[{timeStamp}] |{__name__}| Finding template from template list")
     for template in template_list:
         if template.id == int(id):
             return template
@@ -84,6 +86,7 @@ def create_orm_override(attr, orm_device, orm_template):
     try:
         target = int(attr['id'])
     except ValueError:
+        LOGGER.error(f"[{timeStamp}] |{__name__} Unknown attribute {attr['id']} in override list")
         raise HTTPRequestError(400, "Unknown attribute \"{}\" in override list".format(attr['id']))
 
     found = False
@@ -97,13 +100,16 @@ def create_orm_override(attr, orm_device, orm_template):
                     static_value=attr['static_value']
                 )
                 db.session.add(orm_override)
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| Added overrided form {orm_override}")
 
             # Update possible metadata field
             if 'metadata' in attr:
                 for metadata in attr['metadata']:
                     try:
                         metadata_target = int(metadata['id'])
+                        LOGGER.debug(f"[{timeStamp}] |{__name__}| Updated metadata {metadata_target}")
                     except ValueError:
+                        LOGGER.error(f"[{timeStamp}] |{__name__} metadata attribute {attr['id']} in override list")
                         raise HTTPRequestError(400, "Unknown metadata attribute \"{}\" in override list".format(
                             metadata['id']))
 
@@ -120,8 +126,11 @@ def create_orm_override(attr, orm_device, orm_template):
                                         static_value=metadata['static_value']
                                     )
                                     db.session.add(orm_override)
+                                    LOGGER.debug(f"[{timeStamp}] |{__name__}| Added overrided form {orm_override}")
+
 
     if not found:
+        LOGGER.error(f"[{timeStamp}] |{__name__} Unknown attribute {attr['id']} in override list")
         raise HTTPRequestError(400, "Unknown attribute \"{}\" in override list".format(target))
 
 def auto_create_template(json_payload, new_device):
@@ -129,6 +138,7 @@ def auto_create_template(json_payload, new_device):
         device_template = DeviceTemplate(
             label="device.%s template" % new_device.id)
         db.session.add(device_template)
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| Adding auto-created template {device_template} into database")
         new_device.templates = [device_template]
         load_attrs(json_payload['attrs'], device_template, DeviceAttr, db)
 
@@ -137,11 +147,13 @@ def auto_create_template(json_payload, new_device):
         for attr in json_payload['attrs']:
             orm_template = find_template(new_device.templates, attr['template_id'])
             if orm_template is None:
+                LOGGER.error(f"[{timeStamp}] |{__name__} Unknown template {orm_template} in attr list")
                 raise HTTPRequestError(400, 'Unknown template "{}" in attr list'.format(orm_template))
             create_orm_override(attr, new_device, orm_template)
 
 def parse_template_list(template_list, new_device):
     new_device.templates = []
+    LOGGER.debug(f"[{timeStamp}] |{__name__}| Adding new template list for device {new_device}")
     for template_id in template_list:
         new_device.templates.append(assert_template_exists(template_id, db.session))
 
@@ -153,6 +165,7 @@ def find_attribute(orm_device, attr_name, attr_type):
     for template_id in orm_device['attrs']:
         for attr in orm_device['attrs'][template_id]:
             if (attr['label'] == attr_name) and (attr['type'] == attr_type):
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| retrieving attribute {attr}")
                 return attr
     return None
 
@@ -188,8 +201,10 @@ class DeviceHandler(object):
             _attempts += 1
             new_id = create_id()
             if Device.query.filter_by(id=new_id).first() is None:
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| Generated a new device id {new_id}")
                 return new_id
-
+        
+        LOGGER.error(f"[{timeStamp}] |{__name__}| Failed to generate unique device_id")
         raise HTTPRequestError(500, "Failed to generate unique device_id")
 
     @staticmethod
@@ -204,6 +219,7 @@ class DeviceHandler(object):
         init_tenant_context(req, db)
 
         data = []
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| Fetching list with known devices")
         for id in db.session.query(Device.id).all():
             data.append(id[0])
         return data
@@ -222,9 +238,6 @@ class DeviceHandler(object):
         :raises HTTPRequestError: If no authorization token was provided (no
         tenant was informed)
         """
-
-        if req.args.get('idsOnly', 'false').lower() in ['true', '1', '']:
-            return DeviceHandler.list_ids(req)
 
         tenant = init_tenant_context(req, db)
 
@@ -251,7 +264,7 @@ class DeviceHandler(object):
         target_label = req.args.get('label', None)
         if target_label:
             label_filter.append("devices.label like '%{}%'".format(target_label))
-        
+            
         template_filter = []
         target_template = req.args.get('template', None)
         if target_template:
@@ -270,8 +283,11 @@ class DeviceHandler(object):
                                  .filter(*template_filter) \
                                  .group_by(Device.id) \
                                  .subquery()
+            
+            LOGGER.warning(subquery)
             # devices must match all supplied filters
-            if (len(attr_filter)):
+            if (attr_filter):
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| Filtering devices by {attr_filter}")
                 page = db.session.query(Device) \
                              .join(DeviceTemplateMap) \
                              .join(subquery, subquery.c.id == Device.id) \
@@ -281,6 +297,7 @@ class DeviceHandler(object):
                              .order_by(sortBy) \
                              .paginate(**pagination)
             else: # only filter by label
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| Filtering devices by label")
                 page = db.session.query(Device) \
                         .join(DeviceTemplateMap) \
                         .join(subquery, subquery.c.id == Device.id) \
@@ -289,11 +306,16 @@ class DeviceHandler(object):
                         .order_by(sortBy) \
                         .paginate(**pagination)
         else:
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Querying devices sorted by {sortBy}")
             page = db.session.query(Device).order_by(sortBy).paginate(**pagination)
 
         status_info = StatusMonitor.get_status(tenant)
 
         devices = []
+
+        if req.args.get('idsOnly', 'false').lower() in ['true', '1', '']:                
+            return DeviceHandler.get_only_ids(page)
+
         for d in page.items:
             devices.append(serialize_full_device(d, tenant, sensitive_data, status_info))
 
@@ -307,6 +329,18 @@ class DeviceHandler(object):
             'devices': devices
         }
         return result
+    
+    @staticmethod
+    def get_only_ids(page):
+
+        device_id = []
+        
+        for device in page.items:
+            data_device = device_schema.dump(device)
+            id_device = data_device.get('id')
+            device_id.append(id_device)
+        
+        return device_id
 
     @staticmethod
     def get_device(req, device_id, sensitive_data=False):
@@ -546,10 +580,10 @@ class DeviceHandler(object):
 
         orm_device = assert_device_exists(device_id)
         full_device = serialize_full_device(orm_device, meta['service'])
-        LOGGER.debug('Full device: %s', json.dumps(full_device))
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| Full device: {json.dumps(full_device)}")
 
         payload = json.loads(req.data)
-        LOGGER.debug('Parsed request payload: %s', json.dumps(payload))
+        LOGGER.debug(f'[{timeStamp}] |{__name__}| Parsed request payload: {json.dumps(payload)}')
 
         payload['id'] = orm_device.id
 
@@ -558,12 +592,12 @@ class DeviceHandler(object):
                 invalid_attrs.append(attr)
 
         if not invalid_attrs:
-            LOGGER.info('Sending configuration message through Kafka.')
+            LOGGER.debug(f'[{timeStamp}] |{__name__}| Sending configuration message through Kafka.')
             kafka_handler.configure(payload, meta)
-            LOGGER.info('Configuration sent.')
-            result = {'status': 'configuration sent to device'}
+            LOGGER.debug(f'[{timeStamp}] |{__name__}| Configuration sent.')
+            result = {f'[{timeStamp}] |{__name__}| status': 'configuration sent to device'}
         else:
-            LOGGER.info('invalid attributes detected in command: {}'.format(invalid_attrs))
+            LOGGER.warning(f'[{timeStamp}] |{__name__}| invalid attributes detected in command: {invalid_attrs}')
             result = {
                 'status': 'some of the attributes are not configurable',
                 'attrs': invalid_attrs
@@ -865,8 +899,11 @@ def flask_get_devices():
     """
     try:
         result = DeviceHandler.get_devices(request)
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Getting latest added device(s).')
+
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -883,32 +920,40 @@ def flask_create_device():
     """
     try:
         result = DeviceHandler.create_device(request)
+        devices = result.get('devices')
+        deviceId = devices[0].get('id')
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Creating a new device with id {deviceId}.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         
         return format_response(e.error_code, e.message)
+
 
 
 @device.route('/device/<device_id>', methods=['GET'])
 def flask_get_device(device_id):
     try:
         result = DeviceHandler.get_device(request, device_id)
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Getting the device with id {device_id}.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         
         return format_response(e.error_code, e.message)
 
-
 @device.route('/device/<device_id>', methods=['DELETE'])
 def flask_remove_device(device_id):
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Removing the device with id {device_id}.')
         results = DeviceHandler.delete_device(request, device_id)
         return make_response(jsonify(results), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         
@@ -918,9 +963,11 @@ def flask_remove_device(device_id):
 @device.route('/device/<device_id>', methods=['PUT'])
 def flask_update_device(device_id):
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Updating the device with id {device_id}.')
         results = DeviceHandler.update_device(request, device_id)
         return make_response(jsonify(results), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -933,10 +980,12 @@ def flask_configure_device(device_id):
     Send actuation commands to the device
     """
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Actuating in the device with id {device_id}.')
         result = DeviceHandler.configure_device(request, device_id)
         return make_response(jsonify(result), 200)
 
     except HTTPRequestError as error:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(error.message, dict):
             return make_response(jsonify(error.message), error.error_code)
         
@@ -947,10 +996,12 @@ def flask_configure_device(device_id):
 @device.route('/device/<device_id>/template/<template_id>', methods=['POST'])
 def flask_add_template_to_device(device_id, template_id):
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Adding template with id {template_id} in the device {device_id}.')
         result = DeviceHandler.add_template_to_device(
             request, device_id, template_id)
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -960,10 +1011,12 @@ def flask_add_template_to_device(device_id, template_id):
 @device.route('/device/<device_id>/template/<template_id>', methods=['DELETE'])
 def flask_remove_template_from_device(device_id, template_id):
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Removing template with id {template_id} in the device {device_id}.')
         result = DeviceHandler.remove_template_from_device(
             request, device_id, template_id)
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -973,9 +1026,11 @@ def flask_remove_template_from_device(device_id, template_id):
 @device.route('/device/template/<template_id>', methods=['GET'])
 def flask_get_by_template(template_id):
     try:
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Getting devices with template id {template_id}.')
         result = DeviceHandler.get_by_template(request, template_id)
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -1003,8 +1058,10 @@ def flask_gen_psk(device_id):
                                        key_length,
                                        target_attributes)
 
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Successfully generated psk for the device: {device_id}.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -1052,8 +1109,10 @@ def flask_internal_get_devices():
     """
     try:
         result = DeviceHandler.get_devices(request, True)
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Getting known internal devices.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 
@@ -1064,8 +1123,10 @@ def flask_internal_get_devices():
 def flask_internal_get_device(device_id):
     try:
         result = DeviceHandler.get_device(request, device_id, True)
+        LOGGER.info(f'[{timeStamp}] |{__name__}| Get known device with id: {device_id}.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
+        LOGGER.error(f'[{timeStamp}] |{__name__}| {e.message} - {e.error_code}.')
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
 

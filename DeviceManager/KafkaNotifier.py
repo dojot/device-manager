@@ -7,11 +7,13 @@ from kafka import KafkaProducer
 from kafka.errors import KafkaTimeoutError
 
 from DeviceManager.conf import CONFIG
+from DeviceManager.Logger import Log
+from datetime import datetime
+import time
 
-LOGGER = logging.getLogger('device-manager.' + __name__)
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.WARNING)
 
+timeStamp = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y:%H:%M:%S')
+LOGGER = Log().color_log()
 
 class DeviceEvent:
     CREATE = "create"
@@ -73,21 +75,22 @@ def send_notification(event, device, meta):
     full_msg = NotificationMessage(event, device, meta)
     try:
         topic = get_topic(meta['service'], CONFIG.subject)
-        LOGGER.debug("topic for '{}' is '{}'".format(CONFIG.subject, topic))
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| topic for {CONFIG.subject} is {topic}")
         if topic is None:
-            LOGGER.error("Failed to retrieve named topic to publish to")
+            LOGGER.error(f"[{timeStamp}] |{__name__}| Failed to retrieve named topic to publish to")
 
         kf_prod.send(topic, full_msg.to_json())
         kf_prod.flush()
     except KafkaTimeoutError:
-        LOGGER.error("Kafka timed out.")
+        LOGGER.error(f"[{timeStamp}] |{__name__}| Kafka timed out.")
 
 def send_raw(raw_data, tenant):
     try:
         topic = get_topic(tenant, CONFIG.subject)
         if topic is None:
-            LOGGER.error("Failed to retrieve named topic to publish to")
+            LOGGER.error(f"[{timeStamp}] |{__name__}| Failed to retrieve named topic to publish to")
         kf_prod.send(topic, raw_data)
         kf_prod.flush()
     except KafkaTimeoutError:
-        LOGGER.error("Kafka timed out.")
+        LOGGER.error(f"[{timeStamp}] |{__name__}| Kafka timed out.")
+        
