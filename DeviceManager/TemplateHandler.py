@@ -17,12 +17,14 @@ from DeviceManager.KafkaNotifier import send_raw, DeviceEvent
 from DeviceManager.app import app
 from DeviceManager.utils import format_response, HTTPRequestError, get_pagination
 
-LOGGER = logging.getLogger('device-manager.' + __name__)
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.INFO)
+from DeviceManager.Logger import Log
+from datetime import datetime
+import time
+
 
 template = Blueprint('template', __name__)
-
+timeStamp = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y:%H:%M:%S')
+LOGGER = Log().color_log()
 
 def attr_format(req, result):
     """ formats output attr list acording to user input """
@@ -30,7 +32,7 @@ def attr_format(req, result):
 
     def remove(d,k):
         try:
-            LOGGER.info('will remove {}'.format(k))
+            LOGGER.info(f'[{timeStamp}] |{__name__}| will remove {k}')
             d.pop(k)
         except KeyError:
             pass
@@ -84,12 +86,14 @@ class TemplateHandler:
         sortBy = SORT_CRITERION.get(req.args.get('sortBy', None), DeviceTemplate.id)
 
         if parsed_query:
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Filtering template by {parsed_query}")
             page = db.session.query(DeviceTemplate) \
                              .join(DeviceAttr, isouter=True) \
                              .filter(*parsed_query) \
                              .order_by(sortBy) \
                              .paginate(**pagination)
         else:
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Querying templates sorted by {sortBy}")
             page = db.session.query(DeviceTemplate).order_by(sortBy).paginate(**pagination)
 
         templates = []
@@ -129,8 +133,9 @@ class TemplateHandler:
 
         try:
             db.session.commit()
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Created template in database")
         except IntegrityError as e:
-            LOGGER.info(e)
+            LOGGER.error(f'[{timeStamp}] |{__name__}| {e}')
             raise HTTPRequestError(400, 'Template attribute constraints are violated by the request')
 
         results = {
@@ -213,40 +218,40 @@ class TemplateHandler:
         # parse updated version from payload
         updated, json_payload = parse_payload(req, template_schema)
 
-        LOGGER.debug(f"Current json payload: {json_payload}")
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| Current json payload: {json_payload}")
 
         old.label = updated['label']
 
         new = json_payload['attrs']
-        LOGGER.debug("Checking old template attributes")
+        LOGGER.debug(f"[{timeStamp}] |{__name__}| Checking old template attributes")
         for a in old.attrs:
-            LOGGER.debug(f"Checking attribute {a}...")
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Checking attribute {a}...")
             found = False
             for idx, b in enumerate(new):
-                LOGGER.debug(f"Comparing against new attribute {b}")
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| Comparing against new attribute {b}")
                 if (a.label == b['label']) and (a.type == b['type']):
                     found = True
                     a.value_type = b.get('value_type', None)
                     a.static_value = b.get('static_value', None)
                     new.pop(idx)
-                    LOGGER.debug("They match. Attribute data will be updated.")
+                    LOGGER.debug(f"[{timeStamp}] |{__name__}| They match. Attribute data will be updated.")
                     break
             if not found:
-                LOGGER.debug("No match for this attribute. It will be removed.")
+                LOGGER.debug(f"[{timeStamp}] |{__name__}| No match for this attribute. It will be removed.")
                 db.session.delete(a)
 
         for a in new:
-            LOGGER.debug(f"Adding new attribute {a}")
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Adding new attribute {a}")
             if "id" in a:
                 del a["id"]
             db.session.add(DeviceAttr(template=old, **a))
 
         try:
-            LOGGER.debug("Commiting new data...")
+            LOGGER.debug(f"[{timeStamp}] |{__name__}| Commiting new data...")
             db.session.commit()
             LOGGER.debug("... data committed.")
         except IntegrityError as error:
-            LOGGER.debug("ConsistencyException was thrown.")
+            LOGGER.debug(f"[{timeStamp}] |{__name__}|  ConsistencyException was thrown.")
             handle_consistency_exception(error)
 
         # notify interested parties that a set of devices might have been implicitly updated
@@ -279,13 +284,19 @@ class TemplateHandler:
 def flask_get_templates():
     try:
         result = TemplateHandler.get_templates(request)
+
+        for templates in result.get('templates'):
+            LOGGER.info(f"[{timeStamp}] |{__name__}| Getting template with id {templates.get('id')}")
+        
         return make_response(jsonify(result), 200)
 
     except ValidationError as e:
         results = {'message': 'failed to parse attr', 'errors': e}
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         return make_response(jsonify(results), 500)
 
     except HTTPRequestError as e:
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         else:
@@ -296,12 +307,17 @@ def flask_get_templates():
 def flask_create_template():
     try:
         result = TemplateHandler.create_template(request)
+        
+        LOGGER.info(f"{timeStamp}] |{__name__}| Creating a new template")        
+        
         return make_response(jsonify(result), 200)
 
     except ValidationError as e:
         results = {'message': 'failed to parse attr', 'errors': e}
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         return make_response(jsonify(results), 400)
     except HTTPRequestError as error:
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         if isinstance(error.message, dict):
             return make_response(jsonify(error.message), error.error_code)
         else:
@@ -312,11 +328,14 @@ def flask_create_template():
 def flask_get_template(template_id):
     try:
         result = TemplateHandler.get_template(request, template_id)
+        LOGGER.info(f"Getting template with id: {template_id}")
         return make_response(jsonify(result), 200)
     except ValidationError as e:
         results = {'message': 'failed to parse attr', 'errors': e}
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         return make_response(jsonify(results), 500)
     except HTTPRequestError as e:
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e}")
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         else:
@@ -327,11 +346,14 @@ def flask_get_template(template_id):
 def flask_remove_template(template_id):
     try:
         result = TemplateHandler.remove_template(request, template_id)
+        LOGGER.info(f"Removing template with id: {template_id}")
         return make_response(jsonify(result), 200)
     except ValidationError as e:
         results = {'message': 'failed to parse attr', 'errors': e}
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e.message}")
         return make_response(jsonify(results), 500)
     except HTTPRequestError as e:
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {e.message}")
         if isinstance(e.message, dict):
             return make_response(jsonify(e.message), e.error_code)
         else:
@@ -342,11 +364,14 @@ def flask_remove_template(template_id):
 def flask_update_template(template_id):
     try:
         result = TemplateHandler.update_template(request, template_id)
+        LOGGER.info(f"Updating template with id: {template_id}")
         return make_response(jsonify(result), 200)
     except ValidationError as e:
         results = {'message': 'failed to parse attr', 'errors': e}
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {error.message}")
         return make_response(jsonify(results), 500)
     except HTTPRequestError as error:
+        LOGGER.error(f"[{timeStamp}] |{__name__}| {error.message}")
         if isinstance(error.message, dict):
             return make_response(jsonify(error.message), error.error_code)
         else:

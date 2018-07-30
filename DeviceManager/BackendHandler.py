@@ -3,16 +3,17 @@
 """
 
 import json
-import logging
 import traceback
 import requests
-
 from DeviceManager.utils import HTTPRequestError
 from DeviceManager.KafkaNotifier import send_notification, DeviceEvent
+import logging
+from datetime import datetime
+import time
+from DeviceManager.Logger import Log
 
-LOGGER = logging.getLogger('device-manager.' + __name__)
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.DEBUG)
+timeStamp = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y:%H:%M:%S')
+LOGGER = Log().color_log()
 
 
 # TODO: this actually is a symptom of bad responsability management.
@@ -128,24 +129,31 @@ class KafkaHandler:
         """
             Publishes event to kafka broker, notifying device creation
         """
+
+        LOGGER.info(f"[{timeStamp}] |{__name__}| Publishing create event to Kafka")
         send_notification(DeviceEvent.CREATE, device, meta)
 
     def remove(self, device, meta):
         """
             Publishes event to kafka broker, notifying device removal
         """
+        
+        LOGGER.info(f"[{timeStamp}] |{__name__}| Publishing remove event to Kafka")
         send_notification(DeviceEvent.REMOVE, device, meta)
 
     def update(self, device, meta):
         """
             Publishes event to kafka broker, notifying device update
         """
+
+        LOGGER.info(f"[{timeStamp}] |{__name__}| Publishing create update to Kafka")
         send_notification(DeviceEvent.UPDATE, device, meta)
 
     def configure(self, device, meta):
         """
             Publishes event to kafka broker, notifying device configuration
         """
+        LOGGER.info(f"[{timeStamp}] |{__name__}| Publishing configure event to Kafka")
         send_notification(DeviceEvent.CONFIGURE, device, meta)
 
 
@@ -173,10 +181,14 @@ class IotaHandler(BackendHandler):
 
     def __get_topic(self, device):
 
+        LOGGER.info('[{}] |{}| About to get the topic from the device: {}'.format(timeStamp, __name__, device))
+
         if device.topic:
             topic = device.topic
         else:
             topic = "/%s/%s/attrs" % (self.service, device.device_id)
+
+        LOGGER.info('[{}] |{}| Obtained topic: {}'.format(timeStamp, __name__, topic))
 
         return topic
 
@@ -215,6 +227,8 @@ class IotaHandler(BackendHandler):
                 base_config['internal_attributes']['attributes'].append({
                     {"topic": "tcp:mqtt:%s" % attr.static_value},
                 })
+        
+        LOGGER.info(f"[{timeStamp}] |{__name__}| The config of the device {device} is {base_config}")
         return base_config
 
     def create(self, device):
@@ -232,6 +246,7 @@ class IotaHandler(BackendHandler):
             if not (response.status_code == 409 or
                     (200 <= response.status_code < 300)):
                 error = "Failed to configure ingestion subsystem: service creation failed"
+                LOGGER.error(f"[{timeStamp}] |{__name__}| {error}")
                 raise HTTPRequestError(500, error)
         except requests.ConnectionError:
             raise HTTPRequestError(500, "Cannot reach ingestion subsystem (service)")
@@ -239,9 +254,14 @@ class IotaHandler(BackendHandler):
         try:
             response = requests.post(self.baseUrl + '/devices', headers=self._headers,
                                      data=json.dumps({'devices':[self.__get_config(device)]}))
+            
             if not (200 <= response.status_code < 300):
                 error = "Failed to configure ingestion subsystem: device creation failed"
+                LOGGER.error(f"[{timeStamp}] |{__name__}| {error}")
                 raise HTTPRequestError(500, error)
+            
+            LOGGER.info("[{timeStamp}] |{__name__}| Device {device} created with success")
+
         except requests.ConnectionError:
             raise HTTPRequestError(500, "Cannot reach ingestion subsystem (device)")
 
@@ -256,7 +276,11 @@ class IotaHandler(BackendHandler):
                                            headers=self._noBodyHeaders)
                 if not (200 <= response.status_code < 300):
                     error = "Failed to configure ingestion subsystem: device removal failed"
+                    LOGGER.error(f"[{timeStamp}] |{__name__}| {error}")
                     raise HTTPRequestError(500, error)
+                
+                LOGGER.info(f"[{timeStamp}] |{__name__}| Device {deviceid} removed with success")
+
         except requests.ConnectionError:
             raise HTTPRequestError(500, "Cannot reach ingestion subsystem")
 
