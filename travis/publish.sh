@@ -12,4 +12,5 @@ if [ $TRAVIS_PULL_REQUEST == false ] ; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   docker tag ${TRAVIS_REPO_SLUG} ${tag}
   docker push $tag
+  curl -X POST -H "Content-Type: application/json" --data '{}' ${DOCKER_HUB_BUILD_URL}
 fi
