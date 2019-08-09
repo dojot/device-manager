@@ -41,10 +41,10 @@ class Log:
                 self.log.removeHandler(hdlr)
 
             self.stream = logging.StreamHandler()
-            self.stream.setLevel(LEVEL)
+            self.stream.setLevel(LEVEL.upper())
             self.stream.setFormatter(self.formatter)
 
-            self.log.setLevel(LEVEL)
+            self.log.setLevel(LEVEL.upper())
             self.log.addHandler(self.stream)
             self.log.handler_set = True
 

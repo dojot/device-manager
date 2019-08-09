@@ -60,7 +60,8 @@ services:
     environment:
       - DEV_MNGR_CRYPTO_PASS="kamehameHA"
       - DEV_MNGR_CRYPTO_IV=1234567890123456
-      - DEV_MNGR_CRYPTO_SALT="shuriken"        
+      - DEV_MNGR_CRYPTO_SALT="shuriken"
+      - LOG_LEVEL="INFO"
 
   device-manager-redis:
     image: redis
@@ -71,4 +72,5 @@ services:
       - DEV_MNGR_CRYPTO_PASS="kamehameHA"
       - DEV_MNGR_CRYPTO_IV=1234567890123456
       - DEV_MNGR_CRYPTO_SALT="shuriken"
+      - LOG_LEVEL="INFO"
     image: dredd/test
