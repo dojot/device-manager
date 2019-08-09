@@ -6,6 +6,7 @@ from DeviceManager.app import app
 # initialize modules
 import DeviceManager.DeviceHandler
 import DeviceManager.TemplateHandler
+import DeviceManager.LoggerHandler
 import DeviceManager.ImportHandler
 import DeviceManager.ErrorManager
 

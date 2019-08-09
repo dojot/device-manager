@@ -129,6 +129,11 @@ class ImportSchema(Schema):
 import_schema = ImportSchema()
 import_list_schema = ImportSchema(many=True)
 
+class LogSchema(Schema):
+    level = fields.Str(required=True)
+
+log_schema = LogSchema()
+
 def parse_payload(request, schema):
     try:
         content_type = request.headers.get('Content-Type')

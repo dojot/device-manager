@@ -19,7 +19,8 @@ class Config(object):
                  redis_host="device-manager-redis",
                  redis_port="6379",
                  status_timeout="5",
-                 create_db=True):
+                 create_db=True,
+                 log_level="INFO"):
         # Postgres configuration data
         self.dbname = os.environ.get('DBNAME', db)
         self.dbhost = os.environ.get('DBHOST', dbhost)
@@ -32,6 +33,9 @@ class Config(object):
         self.kafka_port = os.environ.get('KAFKA_PORT', kafka_port)
 
         self.orion = os.environ.get('ORION', 'false') in ['True', 'true', 'TRUE', '1']
+
+        # Log configuration
+        self.log_level = os.environ.get('LOG_LEVEL', log_level)
 
         # Data broker configuration
         # Full baseurl of data-broker

@@ -33,23 +33,24 @@ But you won't need to worry about installing any of these - they are automatical
 
 These are the environment variables used by device-manager
 
-Key                     | Purpose                                             | Default Value
------------------------ | --------------------------------------------------- | --------------
-DBNAME                  | postgres database name                              | dojot_devm
-DBHOST                  | postgres database host                              | postgres
-DBUSER                  | postgres database user                              | postgres
-DBPASS                  | postgres database password                          | none
-DBDRIVER                | postgres database driver                            | postgresql+psycopg2
-CREATE_DB               | option to create the database                       | True
-KAFKA_HOST              | kafka host                                          | kafka
-KAFKA_PORT              | kafka port                                          | 9092
-STATUS_TIMEOUT          | kafka timeout                                       | 5
-BROKER                  | kafka topic subject manager                         | http://data-broker
-REDIS_HOST              | redis host                                          | device-manager-redis
-REDIS_PORT              | redis port                                          | 6379
-DEV_MNGR_CRYPTO_PASS    | password of crypto                                  | none
-DEV_MNGR_CRYPTO_IV      | inicialization vector of crypto                     | none
-DEV_MNGR_CRYPTO_SALT    | salt of crypto                                      | none
+Key                     | Purpose                                                       | Default Value
+----------------------- | --------------------------------------------------------------| --------------
+DBNAME                  | postgres database name                                        | dojot_devm
+DBHOST                  | postgres database host                                        | postgres
+DBUSER                  | postgres database user                                        | postgres
+DBPASS                  | postgres database password                                    | none
+DBDRIVER                | postgres database driver                                      | postgresql+psycopg2
+CREATE_DB               | option to create the database                                 | True
+KAFKA_HOST              | kafka host                                                    | kafka
+KAFKA_PORT              | kafka port                                                    | 9092
+STATUS_TIMEOUT          | kafka timeout                                                 | 5
+BROKER                  | kafka topic subject manager                                   | http://data-broker
+REDIS_HOST              | redis host                                                    | device-manager-redis
+REDIS_PORT              | redis port                                                    | 6379
+DEV_MNGR_CRYPTO_PASS    | password of crypto                                            | none
+DEV_MNGR_CRYPTO_IV      | inicialization vector of crypto                               | none
+DEV_MNGR_CRYPTO_SALT    | salt of crypto                                                | none
+LOG_LEVEL               | logger level (DEBUG, ERROR, WARNING, CRITICAL, INFO, NOTSET)  | INFO
 
 ## Internal Messages
 
