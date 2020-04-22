@@ -218,14 +218,14 @@ Get the full list of templates with all their associated attributes.
             {
                 "message": "At least one entry per page is mandatory",
                 "status": 400
-            } 
+            }
 
 + Response 400 (application/json)
 
             {
                 "message": "page_size and page_num must be integers",
                 "status": 400
-            } 
+            }
 
 ### Delete all templates [DELETE /template]
 Removes all templates. If any device is based on the template being removed, an error message is returned.
@@ -281,7 +281,7 @@ Removes all templates. If any device is based on the template being removed, an 
         {
             "message": "Templates cannot be removed as they are being used by devices",
             "status": 404
-        } 
+        }
 
 ## Template info [/template/{id}]
 Access a specific template
@@ -481,7 +481,7 @@ All devices based on this template will be also updated.
                 "status": 404
             }
 
-### Delete template [DELETE /template/{id}] 
+### Delete template [DELETE /template/{id}]
 Removes a template. If any device is based on the template being removed, then all its attributes will be also removed.
 
 + Request
@@ -594,14 +594,14 @@ which describes all the attributes to be applied to this device.
             {
                 "message": "Verbose can only be used for single device creation",
                 "status": 400
-            }            
+            }
 
 + Response 400 (application/json)
 
             {
                 "message": "Payload must be valid JSON, and Content-Type set accordingly",
                 "status": 400
-            }    
+            }
 
 + Response 400 (application/json)
 
@@ -621,14 +621,14 @@ which describes all the attributes to be applied to this device.
                     "a device can not have repeated attributes"
                 ],
                 "status": 400
-            } 
+            }
 
 + Response 404 (application/json)
 
             {
                 "message": "No such template: 1",
                 "status": 404
-            }                        
+            }
 
 + Response 500 (application/json)
 
@@ -713,7 +713,7 @@ In this example, there is only one template (ID 4865).
 + Parameters
     + page_size: 20 (integer, optional)
     + page_num: 1 (integer, optional)
-    + idsOnly: false (booelan, optional) - Return only the ids of all existing devices. Ignores any `page_size` and `page_num` configurations
+    + idsOnly: false (booelan, optional) - Return only the IDs of the devices (paginated).
     + attr: foo=bar (string, optional) - Return only devices that posess a given attribute's value
     + attr_type: geopoint (string, optional) - Return only devices with attributes of a particular type.
     + label: dummy (string, optional) - Return only devices that are named accordingly (prefix or suffix match)
@@ -803,14 +803,14 @@ In this example, there is only one template (ID 4865).
             {
                 "message": "At least one entry per page is mandatory",
                 "status": 400
-            } 
+            }
 
 + Response 400 (application/json)
 
             {
                 "message": "page_size and page_num must be integers",
                 "status": 400
-            }             
+            }
 
 ### Get the current list of devices associated with given template [GET /device/template/{template_id}{?page_size,page_num}]
 Get the full list of devices that belong to a given template..
@@ -893,14 +893,14 @@ Get the full list of devices that belong to a given template..
             {
                 "message": "At least one entry per page is mandatory",
                 "status": 400
-            } 
+            }
 
 + Response 400 (application/json)
 
             {
                 "message": "page_size and page_num must be integers",
                 "status": 400
-            }                        
+            }
 
 ### Update device info [PUT]
 Updates a device's configuration
@@ -956,7 +956,7 @@ Updates a device's configuration
             {
                 "message": "Payload must be valid JSON, and Content-Type set accordingly",
                 "status": 400
-            }    
+            }
 
 + Response 400 (application/json)
 
@@ -976,7 +976,7 @@ Updates a device's configuration
                     "a device can not have repeated attributes"
                 ],
                 "status": 400
-            } 
+            }
 
 + Response 404 (application/json)
 
@@ -990,7 +990,7 @@ Updates a device's configuration
             {
                 "message": "No such template: 4865",
                 "status": 404
-            }            
+            }
 
 + Response 400 (application/json)
 
@@ -1011,7 +1011,7 @@ Updates a device's configuration
             {
                 "message": "Unknown metadata attribute 2 in override list",
                 "status": 400
-            }            
+            }
 
 
 ### Configure device [PUT /device/{deviceid}/actuate]
@@ -1046,7 +1046,7 @@ The target attribute must be of type "actuator".
             {
                 "message": "No such device: aaaa",
                 "status": 404
-            }            
+            }
 
 + Response 403 (application/json)
 
@@ -1054,7 +1054,7 @@ The target attribute must be of type "actuator".
                 "attrs": [
                     "temperature"
                 ],
-                "status": "some of the attributes are not configurable" 
+                "status": "some of the attributes are not configurable"
             }
 
 
@@ -1255,7 +1255,7 @@ Calling this endpoint twice with the same target attributes will override the pr
             "message": "Some attribute is not a 'psk' type_value",
             "status": 400
         }
-        
+
 ### Copy PSK [PUT /device/{device_id}/attrs/{attr_label}/psk{?from_dev_id,from_attr_label}]
 Copies a generated pre-shared key from a device's attribute to other device's attribute.
 
@@ -1272,7 +1272,7 @@ previously copied from it.
     + `attr_label`: `shared_key` (string, required) - The destination attribute where the key is copied to
     + `from_dev_id`: `efac` (string, required) - The source device where the base attribute lives
     + `from_attr_label`: `shared_key` (string, required) - The source attribute where the key is copied from
-    
+
 + Request
 
     + Headers
@@ -1293,7 +1293,6 @@ previously copied from it.
         {
             "message": "Not found attributes key",
             "status": 404
-            
         }
 
 + Response 400 (application/json)
@@ -1301,7 +1300,7 @@ previously copied from it.
         {
             "message": "Missing mandatory parameter: from_dev_id or/and from_attr_label",
             "status": 400
-        }                
+        }
 
 + Response 400 (application/json)
 
@@ -1317,7 +1316,7 @@ previously copied from it.
             "message": "There is not a psk generated to key",
             "status": 400
         }
-        
+
 
 # Group Internal
 Internal endpoins must not be expose outside the platform. They are used to
@@ -1396,7 +1395,7 @@ In this example, there is only one template (ID 1).
 + Parameters
     + page_size: 20 (integer, optional)
     + page_num: 1 (integer, optional)
-    + idsOnly: false (booelan, optional) - Return only the ids of all existing devices. Ignores any `page_size` and `page_num` configurations
+    + idsOnly: false (booelan, optional) - Return only the IDs of the devices (paginated).
     + attr: foo=bar (string, optional) - Return only devices that posess a given attribute's value
     + label: dummy (string, optional) - Return only devices that are named accordingly (prefix or suffix match)
     + sortBy: label (string, optional) - Return entries sorted by given field. Currently only `label` is supported.
@@ -1480,7 +1479,7 @@ In this example, there is only one template (ID 1).
             {
                 "message": "At least one entry per page is mandatory",
                 "status": 400
-            } 
+            }
 
 + Response 400 (application/json)
 
