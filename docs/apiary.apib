@@ -3,11 +3,12 @@ HOST: http://localhost:5000
 
 # Device Management API
 
-This document describes the APIs using DeviceManager as a standalone process. If used with
-other dojot's components, the endpoints might be changed a bit. Check [dojot's
-documentation](http://dojotdocs.readthedocs.io/) to check all of them.
+This document describes the APIs using the Device Manager as a standalone process. If used with
+other dojot's components, the endpoints might be changed a bit. Check
+[dojot's documentation](http://dojotdocs.readthedocs.io/) to check all of them.
 
 # Group Templates
+
 Before describing the device APIs, we must detail the template endpoints. As said before,
 templates are a way to describe the "device model", or, more abstractly, a "device class".
 These templates contains all the attributes that will be applied to the device.
@@ -20,6 +21,7 @@ to the appropriate device attribute.
 ## Templates [/template]
 
 ### Register a new template [POST]
+
 Register a new template
 
 + Request (application/json)
@@ -112,6 +114,7 @@ Register a new template
 
 
 ### Get the current list of templates [GET /template{?page_size,page_num,attr_format,attr,attr_type,label,sortBy}]
+
 Get the full list of templates with all their associated attributes.
 
 + Parameters
@@ -119,14 +122,25 @@ Get the full list of templates with all their associated attributes.
     + page_num: 1 (integer, optional)
     + attr_format: both (string, optional)
 
-        Must be one of "both", "single" (if 'data_attrs' and 'config_attrs' are to be omited)
-        or "split" (if 'attrs' list is to be omited). 'attrs' field will always contain all
-        template attributes that are listed by both 'data_attrs' and 'config_attrs'.
+        Must be one of `both`, `single` (if `data_attrs` and `config_attrs` are to be omitted)
+        or `split` (if `attrs` list is to be omitted). `attrs` field will always contain all
+        template attributes that are listed by both `data_attrs` and `config_attrs`.
 
-    + attr: foo=bar (string, optional) - Return only templates that posess a given attribute's value
-    + attr_type: geopoint (string, optional) - Return only templates with attributes of a particular type.
-    + label: dummy (string, optional) - Return only templates that are named accordingly (prefix or suffix match)
-    + sortBy: label (string, optional) - Return entries sorted by given field. Currently only `label` is supported.
+    + attr: foo=bar (string, optional)
+
+        Return only templates that possess a given attribute's value.
+
+    + attr_type: geopoint (string, optional)
+
+        Return only templates with attributes of a particular type.
+
+    + label: dummy (string, optional)
+
+        Return only templates that are named accordingly (prefix or suffix match)
+
+    + sortBy: label (string, optional)
+
+        Return entries sorted by given field. Currently only `label` is supported.
 
 + Request
     + Headers
@@ -228,7 +242,9 @@ Get the full list of templates with all their associated attributes.
             }
 
 ### Delete all templates [DELETE /template]
-Removes all templates. If any device is based on the template being removed, an error message is returned.
+
+Removes all templates. If any device is based on the template being removed, an error message is
+returned.
 
 + Request
     + Headers
@@ -285,7 +301,7 @@ Removes all templates. If any device is based on the template being removed, an 
 
 ## Template info [/template/{id}]
 Access a specific template
-+ parameters
++ Parameters
     + id: 4865 (required, integer) - The template ID
 
 
@@ -294,9 +310,9 @@ Retrieves all information from a specific template
 + Parameters
     + attr_format: "both" (string, optional)
 
-        Must be one of "both", "single" (if 'data_attrs' and 'config_attrs' are to be omited)
-        or "split" (if 'attrs' list is to be omited). 'attrs' field will always contain all
-        template attributes that are listed by both 'data_attrs' and 'config_attrs'.
+        Must be one of `both`, `single` (if `data_attrs` and `config_attrs` are to be omitted)
+        or "split" (if `attrs` list is to be omitted). `attrs` field will always contain all
+        template attributes that are listed by both `data_attrs` and `config_attrs`.
 
 + Request
     + Headers
@@ -404,8 +420,10 @@ Retrieves all information from a specific template
             }
 
 ### Update template info [PUT]
-Replaces all attributes from a specific template.
-All devices based on this template will be also updated.
+
+Replaces all attributes from a specific template. All devices based on this template will be also
+updated.
+
 + Request (application/json)
     + Headers
 
@@ -482,7 +500,9 @@ All devices based on this template will be also updated.
             }
 
 ### Delete template [DELETE /template/{id}]
-Removes a template. If any device is based on the template being removed, then all its attributes will be also removed.
+
+Removes a template. If any device is based on the template being removed, then all its attributes
+will be also removed.
 
 + Request
     + Headers
@@ -544,11 +564,16 @@ All these endpoints are related to CRUD operations over devices.
 ## Devices [/device]
 
 ### Register a new device [POST /device{?count,verbose}]
-Register a new device. In this example, there is already a template (ID 1)
-which describes all the attributes to be applied to this device.
+
+Register a new device. In this example, there is already a template (ID 1) which describes all the
+attributes to be applied to this device.
+
 + Parameters
     + count: 3 (integer, optional)
-    + verbose: False (boolean, optional) Set to true if full device description is to be returned.
+    + verbose: False (boolean, optional)
+
+        Set to `True` if full device description is to be returned.
+
 + Request (application/json)
     + Headers
 
@@ -639,12 +664,16 @@ which describes all the attributes to be applied to this device.
 
 
 ## Device info [/device/{id}]
-Access a specific device
-+ parameters
-    + id: efac (required, string) - The device ID
+
+Access a specific device.
+
++ Parameters
+    + id: efac (required, string) - The device ID.
 
 ### Get device info [GET]
-Retrieves all information from a specific device
+
+Retrieves all information from a specific device.
+
 + Request (application/json)
     + Headers
 
@@ -707,19 +736,29 @@ Retrieves all information from a specific device
 
 
 ### Get the current list of devices [GET /device{?page_size,page_num,idsOnly,label,attr,attr_type,sortBy}]
-Get the full list of devices with all their associated attributes.
-Each attribute from *attrs* is the template ID from where the attributes came from.
-In this example, there is only one template (ID 4865).
+
+Get the full list of devices with all their associated attributes. Each attribute from `attrs` is
+the template ID from where the attributes came from. In this example, there is only one template (ID
+4865).
+
 + Parameters
     + page_size: 20 (integer, optional)
     + page_num: 1 (integer, optional)
     + idsOnly: false (boolean, optional) - Return only the IDs of the devices (paginated).
-    + attr: foo=bar (string, optional) - Return only devices that posess a given attribute's value
-    + attr_type: geopoint (string, optional) - Return only devices with attributes of a particular type.
-    + label: dummy (string, optional) - Return only devices that are named accordingly (prefix or suffix match)
-    + sortBy: label (string, optional) - Return entries sorted by given field. Currently only `label` is supported.
+    + attr: foo=bar (string, optional) - Return only devices that possess a given attribute's value.
+    + attr_type: geopoint (string, optional)
 
-+ Request
+        Return only devices with attributes of a particular type.
+
+    + label: dummy (string, optional)
+
+        Return only devices that are named accordingly (prefix or suffix match).
+
+    + sortBy: label (string, optional)
+
+        Return entries sorted by given field. Currently only `label` is supported.
+
++ Request List complete device information
       + Headers
 
             Authorization: Bearer JWT
@@ -781,8 +820,10 @@ In this example, there is only one template (ID 4865).
                 }
             }
 
-+ Request List only device ids
-    `idsOnly` query parameter set to `true`
++ Request List only device IDs
+
+    `idsOnly` query parameter set to `true`.
+
     + Headers
 
             Authorization: Bearer JWT
@@ -813,11 +854,14 @@ In this example, there is only one template (ID 4865).
             }
 
 ### Get the current list of devices associated with given template [GET /device/template/{template_id}{?page_size,page_num}]
-Get the full list of devices that belong to a given template..
+
+Get the full list of devices that belong to a given template.
+
 + Parameters
   + template_id: 4865 (integer, required)
   + page_size: 20 (integer, optional)
   + page_num: 1 (integer, optional)
+
 + Request
       + Headers
 
@@ -903,7 +947,9 @@ Get the full list of devices that belong to a given template..
             }
 
 ### Update device info [PUT]
+
 Updates a device's configuration
+
 + Request (application/json)
     + Headers
 
@@ -1014,11 +1060,13 @@ Updates a device's configuration
             }
 
 
-### Configure device [PUT /device/{deviceid}/actuate]
-Send a configuration message to the device to change some of its attributes.
-The target attribute must be of type "actuator".
+### Configure device [PUT /device/{id}/actuate]
+
+Send a configuration message to the device to change some of its attributes. The target attribute
+must be of type `actuator`.
+
 + Parameters
- + deviceid: efac (required, string): Device ID being invoked.
+ + id: efac (required, string) - Device ID being invoked.
 
 + Request (application/json)
     + Headers
@@ -1060,7 +1108,9 @@ The target attribute must be of type "actuator".
 
 
 ### Delete device [DELETE /device/{id}]
-Removes a device
+
+Removes a device.
+
 + Request (application/json)
     + Headers
 
@@ -1125,6 +1175,7 @@ Removes a device
 
 
 ### Delete all devices [DELETE /device]
+
 Delete all devices.
 
 + Request
@@ -1184,22 +1235,26 @@ Delete all devices.
                 "result": "ok"
                 }
 
+## PSK Manipulation [/device/gen_psk]
 
-### Generate PSK [POST /device/gen_psk/{device_id}{?key_length,attrs}]
+Manipulates the devices' keys.
+
+### Generate PSK [POST /device/gen_psk/{id}{?key_length,attrs}]
+
 Generates pre shared keys for a specific device.
 
-This endpoint generates a random key to attributes with the 'type_value' equal
-to 'psk'. The generated key is returned just once, i.e, the user can not retrive
-it via /device.
+This endpoint generates a random key to attributes with the `type_value` equal to `psk`. The
+generated key is returned just once, i.e, the user can not retrive it via `/device`.
 
 Calling this endpoint twice with the same target attributes will override the previous one.
 
 + Parameters
-    + device_id: efac (string, required) - Device id
-    + key_length: 8 (integer, required) - Key's length in bytes
-    + attrs: shared_key (string, optional) - Comma separated list with the
-    target attributes. If this parameter is not present the all aplicable
-    attributes will be the target.
+    + id: efac (string, required) - The device ID.
+    + key_length: 8 (integer, required) - Key's length in bytes.
+    + attrs: shared_key (string, optional)
+
+        Comma-separated list with the target attributes. If this parameter is not present the all
+        aplicable attributes will be the target.
 
 + Request
 
@@ -1255,7 +1310,7 @@ Calling this endpoint twice with the same target attributes will override the pr
             "status": 400
         }
 
-### Copy PSK [PUT /device/{device_id}/attrs/{attr_label}/psk{?from_dev_id,from_attr_label}]
+### Copy PSK [PUT /device/{id}/attrs/{attr_label}/psk{?from_dev_id,from_attr_label}]
 Copies a generated pre-shared key from a device's attribute to other device's attribute.
 
 This endpoint copies a previously generated pre-shared key from a device's attribute to other.
@@ -1267,7 +1322,7 @@ the source attribute changes the key it will not reflect in others attributes
 previously copied from it.
 
 + Parameters
-    + `device_id`: `acaf` (string, required) - The device the where the destination attribute lives
+    + `id`: `acaf` (string, required) - The device the where the destination attribute lives
     + `attr_label`: `shared_key` (string, required) - The destination attribute where the key is copied to
     + `from_dev_id`: `efac` (string, required) - The source device where the base attribute lives
     + `from_attr_label`: `shared_key` (string, required) - The source attribute where the key is copied from
@@ -1318,18 +1373,18 @@ previously copied from it.
 
 
 # Group Internal
-Internal endpoins must not be expose outside the platform. They are used to
-internal communcation with other services.
 
+Internal endpoints that can't be accessed outside the platform. They are used for internal services'
+intercommunication.
 
 ## Device [/internal/device]
 
+### Get device info [GET /internal/device/{id}]
 
-### Get device info [GET /internal/device/{device_id}]
 Retrieves all information from a specific device.
 
 + Parameters
-    + device_id: efac (string, required) - Device id
+    + id: efac (string, required) - Device id
 
 + Request
     + Headers
@@ -1388,18 +1443,25 @@ Retrieves all information from a specific device.
 
 
 ### Get the current list of devices [GET /internal/device{?page_size,page_num,idsOnly,attr,label,sortBy}]
-Get the full list of devices with all their associated attributes.
-Each attribute from *attrs* is the template ID from where the attributes came from.
-In this example, there is only one template (ID 1).
+
+Get the full list of devices with all their associated attributes. Each attribute from *attrs* is
+the template ID from where the attributes came from. In this example, there is only one template (ID
+1).
+
 + Parameters
     + page_size: 20 (integer, optional)
     + page_num: 1 (integer, optional)
     + idsOnly: false (boolean, optional) - Return only the IDs of the devices (paginated).
-    + attr: foo=bar (string, optional) - Return only devices that posess a given attribute's value
-    + label: dummy (string, optional) - Return only devices that are named accordingly (prefix or suffix match)
-    + sortBy: label (string, optional) - Return entries sorted by given field. Currently only `label` is supported.
+    + attr: foo=bar (string, optional) - Return only devices that possess a given attribute's value.
+    + label: dummy (string, optional)
 
-+ Request
+        Return only devices that are named accordingly (prefix or suffix match).
+
+    + sortBy: label (string, optional)
+
+        Return entries sorted by given field. Currently only `label` is supported.
+
++ Request List complete device information
       + Headers
 
             Authorization: Bearer JWT
@@ -1456,7 +1518,7 @@ In this example, there is only one template (ID 1).
             }
 
 
-+ Request List only device ids
++ Request List only device IDs
     `idsOnly` query parameter set to `true`
     + Headers
 
