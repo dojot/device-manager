@@ -3,15 +3,13 @@
 [![License badge](https://img.shields.io/badge/license-GPL-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![Docker badge](https://img.shields.io/docker/pulls/dojot/iotagent-json.svg)](https://hub.docker.com/r/dojot/device-manager/)
 
-The Device Manager handles all CRUD operations related to devices in dojot. For more information on
-that, check [Device Manager Concepts page](./docs/concepts.rst).
+The Device Manager handles all CRUD operations related to devices in dojot.
 
 ## How does it work
 
 The Device Manager stores and retrieves information models for devices and templates and a few
 static information about them as well. Whenever a device is created, removed or just edited, it will
-publish a message through Kafka. All messages published by the Device Manager to Kafka can be seen
-in [Device Manager Messages](https://dojotdocs.readthedocs.io/projects/DeviceManager/en/latest/kafka-messages.html).
+publish a message through Kafka.
 
 ## Dependencies
 
@@ -46,26 +44,12 @@ KAFKA_PORT           | Kafka port                      | 9092                | N
 LOG_LEVEL            | Logger level                    | INFO                | DEBUG, ERROR, WARNING, CRITICAL, INFO
 STATUS_TIMEOUT       | Kafka timeout                   | 5                   | Number
 
-## Internal Messages
-
-There are some messages that are published by Device Manager to Kafka. These messages are
-notifications of device management operations, and they can be consumed by any component interested
-in them, such as IoT agents.
-
-Event            | Service                     | Message Type
----------------- | --------------------------- | -----------------------
-Device creation  | dojot.device-manager.device | Creation message
-Device update    | dojot.device-manager.device | Update message
-Device removal   | dojot.device-manager.device | Removal message
-Device actuation | dojot.device-manager.device | Actuation message
-Template update  | dojot.device-manager.device | Template update message
-
 ## How to run
 
 For a simple and fast setup, an official Docker image for this service is available on
 [DockerHub](https://hub.docker.com/r/dojot/device-manager).
 
-### Standalone - with Docker
+### **Standalone - with Docker**
 
 If you really need to run Device Manager as a standalone process (without dojot's wonderful
 [Docker Compose](https://github.com/dojot/docker-compose), we suggest using the minimal
@@ -87,7 +71,7 @@ docker run --rm -it --network devm_default -e DEV_MNGR_CRYPTO_PASS=${CRYPTO_PASS
 #
 ```
 
-### Standalone - without Docker
+### **Standalone - without Docker**
 
 "Ok, but I ***really*** want to run device manager on my machine - no Docker no nothing."
 
@@ -117,12 +101,430 @@ generate one by yourself (for now, Device Manager doesn't check if the token is 
 that user - they are verified by Auth and the API gateway), but this method might not work in the
 future as more strict token checks are implemented in this service.
 
-## Documentation
+## How to use
 
-If you have any doubts, check the documentation for more details.
+The usage is via the REST API. Check the
+[API documentation](https://dojot.github.io/device-manager/apiary_latest.html) for more details.
 
-- API
-  - [Development](https://dojot.github.io/device-manager/apiary_development.html)
-  - [Latest](https://dojot.github.io/device-manager/apiary_latest.html)
-- [Read the docs](https://dojotdocs.readthedocs.io/projects/DeviceManager/en/latest/)
-  - [How to use](https://dojotdocs.readthedocs.io/projects/DeviceManager/en/latest/using-device-manager.html)
+## Concepts
+
+This service holds two of the most basic and essential concepts in the dojot platform: the `device`
+and the `template`. Before reading about the events, it's important to understand what each one is
+and know their parameters.
+
+### **Device**
+
+In dojot, a device is a digital representation of an actual device or gateway with one or more
+sensors or of a virtual one with sensors/attributes inferred from other devices.
+
+Consider, for instance, an actual device with temperature and humidity sensors; it can be
+represented into dojot as a device with two attributes (one for each sensor). We call this kind of
+device as regular device or by its communication protocol, for instance, MQTT device or CoAP device.
+
+We can also create devices which don’t directly correspond to their associated physical ones, for
+instance, we can create one with higher level of information of temperature (is becoming hotter or
+is becoming colder) whose values are inferred from temperature sensors of other devices. This kind
+of device is called virtual device.
+
+The information model used for both “real” and virtual devices is as following:
+
+| Attribute     | Type                                                    | Mode       | Required | Description
+| ------------- | ------------------------------------------------------- | ---------- | -------- | -------------------------------------------------------------------
+| **attrs**     | Map of attributes                                       | read-only  | No       | Map of device's attributes (check the attributes in the next table)
+| **created**   | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device creation time.
+| **id**        | String (length of 8 bytes)                              | read-only  | No       | Unique identifier for the device.
+| **label**     | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the device's identification.
+| **templates** | Strings list                                            | read-only  | No       | List of template IDs used by the device.
+| **updated**   | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device last update time.
+
+Example device:
+
+```json
+{
+  "attrs": {
+    "1": [
+      {
+        "created": "2020-09-16T14:50:09.297163+00:00",
+        "id": 1,
+        "is_static_overridden": false,
+        "label": "rain",
+        "static_value": "",
+        "template_id": "1",
+        "type": "dynamic",
+        "value_type": "float"
+      }
+    ]
+  },
+  "created": "2020-09-16T14:50:34.749230+00:00",
+  "updated": "2020-09-16T14:55:41.897400+00:00",
+  "id": "e06357",
+  "label": "teste",
+  "templates": [
+    1
+  ]
+}
+```
+
+The accepted parameters in the `attrs` map are:
+
+| Attribute                | Type                                                    | Mode       | Required | Description
+| ------------------------ | ------------------------------------------------------- | ---------- | -------- | -------------------------------------------------------------------
+| **created**              | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device creation time.
+| **id**                   | Integer                                                 | read-write | No       | Unique identifier for the attribute (automatically generated).
+| **is_static_overridden** | Bool                                                    | read-write | No       | Whether the static value were overridden.
+| **label**                | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the attribute's identification.
+| **static_value**         | String (length of 128 bytes)                            | read-write | No       | The attribute's static value (if it is a static attribute).
+| **template_id**          | Integer                                                 | read-write | No       | From which template did this attribute come from.
+| **type**                 | String (length of 32 bytes)                             | read-write | Yes      | Attribute type (`static`, `dynamic`, `actuator`).
+| **updated**              | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Attribute last update time.
+| **value_type**           | String (length of 32 bytes)                             | read-write | Yes      | Attribute value type (`string`, `float`, `integer`, `geo`).
+
+All attributes that are read/write can be used when creating or updating the device. All of them are
+returned when retrieving device data.
+
+An example of such structure would be:
+
+```json
+"attrs": {
+  "1": [
+    {
+      "label": "rain",
+      "value_type": "float",
+      "template_id": "1",
+      "id": 1,
+      "static_value": "",
+      "type": "dynamic",
+      "created": "2020-09-16T14:50:09.297163+00:00",
+      "is_static_overridden": false
+    },
+    {
+      "label": "mark",
+      "value_type": "string",
+      "template_id": "1",
+      "id": 2,
+      "static_value": "efac",
+      "type": "static",
+      "created": "2020-09-16T14:58:25.905376+00:00",
+      "is_static_overridden": false
+    }
+  ]
+}
+```
+
+### **Template**
+
+All devices are based on a **template**, which can be thought as a blueprint: all devices built
+using the same template will have the same characteristics. Templates in dojot have one label (any
+alphanumeric sequence), a list of attributes which will hold all the device emitted information, and
+optionally a few special attributes which will indicate how the device communicates, including
+transmission methods (protocol, ports, etc.) and message formats.
+
+In fact, templates can represent not only *device models*, but it can also abstract a *class of
+devices*. For instance, we could have one template to represent all thermometers that will be used
+in dojot. This template would have also only one attribute called `temperature`. While creating the
+device, the user would select its *physical template*, let's say *TexasInstr882*, and the
+`thermometer` template. The user would have also to add the translation instructions in order to map
+the temperature reading that will be sent from the device to the `temperature` attribute.
+
+In order to create a device, a user selects which templates are going to compose this new device.
+All their attributes are merged together and associated to it - they are tightly linked to the
+original template so that any template update will reflect all associated devices.
+
+The information model used for templates is:
+
+| Attribute        | Type                                                    | Mode       | Required | Description
+| ---------------- | ------------------------------------------------------- | ---------- | -------- | --------------------------------------------------------------------------------
+| **attrs**        | Map of attributes                                       | read-write | No       | Merges the `config_attrs` and the `data_attrs` parameters.
+| **config_attrs** | Map of attributes                                       | read-write | No       | Stores attributes with the type `meta`.
+| **created**      | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device creation time.
+| **data_attrs**   | Map of attributes                                       | read-write | No       | Stores attributes with the types `dynamic`, `static` and `actuator`.
+| **id**           | String (length of 8 bytes)                              | read-write | No       | Unique identifier for the template.
+| **label**        | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the template's identification.
+| **updated**      | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device last update time.
+
+An example template structure:
+
+```json
+{
+  "label": "teste",
+  "attrs": [
+    {
+      "label": "rain",
+      "value_type": "float",
+      "template_id": "1",
+      "id": 1,
+      "static_value": "",
+      "type": "dynamic",
+      "created": "2020-09-16T14:50:09.297163+00:00"
+    },
+    {
+      "label": "mark",
+      "value_type": "string",
+      "template_id": "1",
+      "id": 2,
+      "static_value": "efac",
+      "type": "static",
+      "created": "2020-09-16T14:58:25.905376+00:00"
+    }
+  ],
+  "data_attrs": [
+    {
+      "label": "rain",
+      "value_type": "float",
+      "template_id": "1",
+      "id": 1,
+      "static_value": "",
+      "type": "dynamic",
+      "created": "2020-09-16T14:50:09.297163+00:00"
+    },
+    {
+      "label": "mark",
+      "value_type": "string",
+      "template_id": "1",
+      "id": 2,
+      "static_value": "efac",
+      "type": "static",
+      "created": "2020-09-16T14:58:25.905376+00:00"
+    }
+  ],
+  "id": 1,
+  "config_attrs": [ ],
+  "created": "2020-09-16T14:50:09.292714+00:00"
+}
+```
+
+All attributes that are read-write can be used when creating or updating the template. All of them
+are returned when retrieving device data. You might also notice some new attributes:
+- `data_attrs`: stores attributes with the types `dynamic`, `static` and `actuator`.
+- `config_attrs`: stores attributes with the type `meta`. You can only create this type of attribute
+  via AP, check its [documentation](https://dojot.github.io/device-manager/apiary_latest.html) for
+  more details.
+
+These two parameters are merged in the `attrs`.
+
+## Events
+
+There are some messages that are published by Device Manager to Kafka. These messages are
+notifications of device management operations, and they can be consumed by any component interested
+in them, such as IoT agents.
+
+For more information on the parameters of the messages, please refer to the [Device Manager concepts
+topic](#concepts).
+
+__NOTE THAT__ all messages reside in Kafka's `dojot.device-manager.device` topic.
+
+The events that are emitted by the Device Manager are:
+
+- `actuate`
+- `create`
+- `remove`
+- `update`
+- `template.update` **deprecated**
+
+### **Event: `actuate`**
+
+This message is published whenever a device must be configured. Its payload is:
+
+```json
+{
+  "event": "actuate",
+  "meta": {
+    "service": "admin"
+  },
+  "data" : {
+    "id" : "efac",
+    "attrs": {
+      "reset" : 1,
+      "step-motor" : "+45"
+    }
+  }
+}
+```
+
+This message must be forwarded to the device. It can contain more attributes than the ones specified
+by the Device Manager. For instance, a `thermostat` could be configured with the following message:
+```json
+{
+  "event": "configure",
+  "meta": {
+    "service": "admin",
+    "timestamp": 1557493697
+  },
+  "data" : {
+    "id" : "efac",
+    "attrs": {
+      "target_temperature" : 23.5
+    }
+  }
+}
+```
+
+The attribute actually used by the device would be `target_temperature` so that it can correctly
+adjust the temperature. It’s up to the receiver of this message (an IoT agent, for instance) to
+properly send the configuration to the device.
+
+### **Event: `create`**
+
+This message is published whenever a new device is created. Its payload is:
+
+```json
+{
+  "event": "create",
+  "data": {
+    "label": "teste",
+    "templates": [
+      1
+    ],
+    "id": "e06357",
+    "created": "2020-09-16T14:50:34.749230+00:00",
+    "attrs": {
+      "1": [
+        {
+          "label": "rain",
+          "value_type": "float",
+          "template_id": "1",
+          "id": 1,
+          "static_value": "",
+          "type": "dynamic",
+          "created": "2020-09-16T14:50:09.297163+00:00",
+          "is_static_overridden": false
+        }
+      ]
+    }
+  },
+  "meta": {
+    "service": "admin"
+  }
+}
+```
+
+
+### **Event: `remove`**
+
+This message is published whenever a device is removed. Its payload is:
+
+```json
+{
+  "event": "remove",
+  "meta": {
+    "service": "admin"
+  },
+  "data": {
+    "id": "efac"
+  }
+}
+```
+
+### **Event: `update`**
+
+This message is published whenever a new device is directly or indirectly updated. The `indirectly
+updated` case happens when a template associated with the device is updated. Its payload looks very
+similar to device creation:
+
+```json
+{
+  "event": "update",
+  "data": {
+    "label": "teste",
+    "templates": [
+      1
+    ],
+    "id": "e06357",
+    "created": "2020-09-16T14:50:34.749230+00:00",
+    "attrs": {
+      "1": [
+        {
+          "label": "rain",
+          "value_type": "float",
+          "template_id": "1",
+          "id": 1,
+          "static_value": "",
+          "type": "dynamic",
+          "created": "2020-09-16T14:50:09.297163+00:00",
+          "is_static_overridden": false
+        },
+        {
+          "label": "mark",
+          "value_type": "string",
+          "template_id": "1",
+          "id": 2,
+          "static_value": "efac",
+          "type": "static",
+          "created": "2020-09-16T14:58:25.905376+00:00",
+          "is_static_overridden": false
+        }
+      ]
+    }
+  },
+  "meta": {
+    "service": "admin"
+  }
+}
+```
+
+### **Event: `template.update` (deprecated)**
+
+__IMPORTANT__: this event is deprecated and can be removed from the platform soon.
+
+This event is emitted every time a template is updated. It contains all the affected devices and the
+new model for that template. Its payload is:
+
+```json
+{
+  "event": "template.update",
+  "data": {
+    "affected": [
+      "e06357"
+    ],
+    "template": {
+      "label": "teste",
+      "attrs": [
+        {
+          "label": "rain",
+          "value_type": "float",
+          "template_id": "1",
+          "id": 1,
+          "static_value": "",
+          "type": "dynamic",
+          "created": "2020-09-16T14:50:09.297163+00:00"
+        },
+        {
+          "label": "mark",
+          "value_type": "string",
+          "template_id": "1",
+          "id": 2,
+          "static_value": "efac",
+          "type": "static",
+          "created": "2020-09-16T14:58:25.905376+00:00"
+        }
+      ],
+      "data_attrs": [
+        {
+          "label": "rain",
+          "value_type": "float",
+          "template_id": "1",
+          "id": 1,
+          "static_value": "",
+          "type": "dynamic",
+          "created": "2020-09-16T14:50:09.297163+00:00"
+        },
+        {
+          "label": "mark",
+          "value_type": "string",
+          "template_id": "1",
+          "id": 2,
+          "static_value": "efac",
+          "type": "static",
+          "created": "2020-09-16T14:58:25.905376+00:00"
+        }
+      ],
+      "id": 1,
+      "config_attrs": [ ],
+      "created": "2020-09-16T14:50:09.292714+00:00"
+    }
+  },
+  "meta": {
+    "service": "admin"
+  }
+}
+```
