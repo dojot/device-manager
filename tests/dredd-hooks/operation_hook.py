@@ -232,13 +232,13 @@ def create_actuator_device(transaction):
 
 @hooks.before('Internal > Device > Get the current list of devices > Example 1')
 def create_single_device_and_gen_psk(transaction):
-    device_id = create_single_device(transaction)    
+    device_id = create_single_device(transaction)
     DeviceHandler.gen_psk(generate_token(), device_id, 16, None)
 
 @hooks.before('Devices > Device info > Get device info')
 @hooks.before('Devices > Device info > Update device info')
 @hooks.before('Devices > Device info > Delete device')
-@hooks.before('Devices > Device info > Generate PSK')
+@hooks.before('Devices > PSK Manipulation > Generate PSK')
 @hooks.before('Devices > Device info > Delete all devices')
 def create_device_and_update_device_id(transaction):
     device_id = create_single_device(transaction)
@@ -249,15 +249,15 @@ def create_device_and_update_device_id(transaction):
 def create_actuate_device_and_update_device_id(transaction):
     device_id = create_actuator_device(transaction)
     transaction['fullPath'] = transaction['fullPath'].replace('efac', device_id)
-    return device_id    
+    return device_id
 
 @hooks.before('Internal > Device > Get device info')
 def prepare_env_psk(transaction):
     device_id = create_device_and_update_device_id(transaction)
     DeviceHandler.gen_psk(generate_token(), device_id, 16, None)
 
-@hooks.before('Devices > Device info > Copy PSK')
-def prepare_copy_psk_env(transaction):    
+@hooks.before('Devices > PSK Manipulation > Copy PSK')
+def prepare_copy_psk_env(transaction):
     device_id = create_single_device(transaction)
     transaction['fullPath'] = transaction['fullPath'].replace('efac', device_id)
     DeviceHandler.gen_psk(generate_token(), device_id, 16, None)
