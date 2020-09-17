@@ -297,7 +297,7 @@ All attributes that are read-write can be used when creating or updating the tem
 are returned when retrieving device data. You might also notice some new attributes:
 - `data_attrs`: stores attributes with the types `dynamic`, `static` and `actuator`.
 - `config_attrs`: stores attributes with the type `meta`. You can only create this type of attribute
-  via AP, check its [documentation](https://dojot.github.io/device-manager/apiary_latest.html) for
+  via API, check its [documentation](https://dojot.github.io/device-manager/apiary_latest.html) for
   more details.
 
 These two parameters are merged in the `attrs`.
