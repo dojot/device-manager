@@ -36,7 +36,7 @@ DBHOST               | PostgreSQL database host        | postgres            | S
 DBNAME               | PostgreSQL database name        | dojot_devm          | String
 DBPASS               | PostgreSQL database password    | none                | String
 DBUSER               | PostgreSQL database user        | postgres            | String
-DEV_MNGR_CRYPTO_IV   | Inicialization vector of crypto | none                | String
+DEV_MNGR_CRYPTO_IV   | Initialization vector of crypto | none                | String
 DEV_MNGR_CRYPTO_PASS | Password of crypto              | none                | String
 DEV_MNGR_CRYPTO_SALT | Salt of crypto                  | none                | String
 KAFKA_HOST           | Kafka host                      | kafka               | Hostname
