@@ -315,19 +315,19 @@ __NOTE THAT__ all messages reside in Kafka's `dojot.device-manager.device` topic
 
 The events that are emitted by the Device Manager are:
 
-- `actuate`
+- `configure`
 - `create`
 - `remove`
 - `update`
 - `template.update` **deprecated**
 
-### **Event: `actuate`**
+### **Event: `configure`**
 
 This message is published whenever a device must be configured. Its payload is:
 
 ```json
 {
-  "event": "actuate",
+  "event": "configure",
   "meta": {
     "service": "admin"
   },
