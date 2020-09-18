@@ -93,9 +93,9 @@ Do notice that all those external infra (Kafka and PostgreSQL) will have to be u
 At a minimum, please remember to configure the two environment variables above (specially if they
 are both `localhost`).
 
-Keep in mind that running a standalone instance of DeviceManager misses a lot of security checks
+Keep in mind that running a standalone instance of Device Manager misses a lot of security checks
 (such as user identity checks, proper multi-tenancy validations, and so on). In particular, every
-request sent to DeviceManager needs an access token, which should be retrived from the
+request sent to Device Manager needs an access token, which should be retrieved from the
 [Auth](https://github.com/dojot/auth) component. In the examples listed in this README, you can
 generate one by yourself (for now, Device Manager doesn't check if the token is actually valid for
 that user - they are verified by Auth and the API gateway), but this method might not work in the
