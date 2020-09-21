@@ -329,24 +329,6 @@ This message is published whenever a device must be configured. Its payload is:
 {
   "event": "configure",
   "meta": {
-    "service": "admin"
-  },
-  "data" : {
-    "id" : "efac",
-    "attrs": {
-      "reset" : 1,
-      "step-motor" : "+45"
-    }
-  }
-}
-```
-
-This message must be forwarded to the device. It can contain more attributes than the ones specified
-by the Device Manager. For instance, a `thermostat` could be configured with the following message:
-```json
-{
-  "event": "configure",
-  "meta": {
     "service": "admin",
     "timestamp": 1557493697
   },
@@ -359,9 +341,9 @@ by the Device Manager. For instance, a `thermostat` could be configured with the
 }
 ```
 
-The attribute actually used by the device would be `target_temperature` so that it can correctly
-adjust the temperature. It’s up to the receiver of this message (an IoT agent, for instance) to
-properly send the configuration to the device.
+The attribute actually used by the device would be `target_temperature` so that it can, for example,
+correctly adjust the temperature. It’s up to the receiver of this message (an IoT agent, for
+instance) to properly send the configuration to the device.
 
 ### **Event: `create`**
 
