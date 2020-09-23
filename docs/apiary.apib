@@ -122,8 +122,8 @@ Get the full list of templates with all their associated attributes.
     + page_num: 1 (integer, optional)
     + attr_format: both (string, optional)
 
-        Must be one of `both`, `single` (if `data_attrs` and `config_attrs` are to be omitted)
-        or `split` (if `attrs` list is to be omitted). `attrs` field will always contain all
+        Must be one of: `single` (if `data_attrs` and `config_attrs` are to be omitted), `split`
+        (if `attrs` list is to be omitted) or `both`. `attrs` field will always contain all
         template attributes that are listed by both `data_attrs` and `config_attrs`.
 
     + attr: foo=bar (string, optional)
@@ -1322,7 +1322,7 @@ the source attribute changes the key it will not reflect in others attributes
 previously copied from it.
 
 + Parameters
-    + `id`: `acaf` (string, required) - The device the where the destination attribute lives
+    + `id`: `acaf` (string, required) - The device where the destination attribute lives
     + `attr_label`: `shared_key` (string, required) - The destination attribute where the key is copied to
     + `from_dev_id`: `efac` (string, required) - The source device where the base attribute lives
     + `from_attr_label`: `shared_key` (string, required) - The source attribute where the key is copied from
