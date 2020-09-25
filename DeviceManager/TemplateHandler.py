@@ -64,6 +64,11 @@ def paginate(query, page, per_page=20, error_out=False):
 
     return Pagination(query, page, per_page, total, items)
 
+def refresh_template_update_column(db, template):
+    if db.session.new or db.session.deleted:
+        LOGGER.debug('The template structure has changed, refreshing "updated" column.')
+        template.updated = datetime.now()
+
 class TemplateHandler:
 
     def __init__(self):
@@ -346,6 +351,7 @@ class TemplateHandler:
                     db.session.add(orm_child)
         try:
             LOGGER.debug(f" Commiting new data...")
+            refresh_template_update_column(db, old)
             db.session.commit()
             LOGGER.debug("... data committed.")
         except IntegrityError as error:
