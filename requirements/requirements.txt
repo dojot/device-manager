@@ -17,7 +17,7 @@ gunicorn==19.7.1
 idna==2.6
 importlib-metadata==3.4.0
 itsdangerous==0.24
-Jinja2==2.10
+Jinja2==2.10.1
 kafka-python==1.4.1
 Mako==1.1.4
 MarkupSafe==1.1.1
