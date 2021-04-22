@@ -42,9 +42,9 @@ class KafkaNotifier:
     def __init__(self):
         self.kafka_address = CONFIG.kafka_host + ':' + CONFIG.kafka_port
         self.kf_prod = None
-        
+
         self.kf_prod = KafkaProducer(value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-                                bootstrap_servers=self.kafka_address)
+                                     bootstrap_servers=self.kafka_address)
 
         # Maps services to their managed topics
         self.topic_map = {}
@@ -57,7 +57,8 @@ class KafkaNotifier:
         target = "{}/topic/{}".format(CONFIG.data_broker, subject)
         userinfo = {
             "username": "device-manager",
-            "service": service
+            # "service": service
+            "iss": "http://localhost:8000/auth/realms/" + service
         }
 
         jwt = "{}.{}.{}".format(base64.b64encode("model".encode()).decode(),
