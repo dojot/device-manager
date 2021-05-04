@@ -8,8 +8,13 @@ from Crypto.Cipher import AES
 from DeviceManager.conf import CONFIG
 
 BS = AES.block_size
-pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
-unpad = lambda s : s[:-ord(s[len(s)-1:])]
+
+
+def pad(s): return s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
+
+
+def unpad(s): return s[:-ord(s[len(s)-1:])]
+
 
 def format_response(status, message=None):
     """ Utility helper to generate default status responses """
@@ -22,13 +27,17 @@ def format_response(status, message=None):
 
     return make_response(jsonify(payload), status)
 
+
 def create_id():
     """ Generates a random hex id for managed entities """
     return '%05x' % random.randrange(16**6)
 
 # from auth service
+
+
 class HTTPRequestError(Exception):
     """ Exception that represents end of processing on any given request. """
+
     def __init__(self, error_code, message):
         super(HTTPRequestError, self).__init__()
         self.message = message
@@ -44,11 +53,13 @@ def get_pagination(request):
         if page < 1:
             raise HTTPRequestError(400, "Page numbers must be greater than 1")
         if per_page < 1:
-            raise HTTPRequestError(400, "At least one entry per page is mandatory")
+            raise HTTPRequestError(
+                400, "At least one entry per page is mandatory")
         return page, per_page
 
     except TypeError:
         raise HTTPRequestError(400, "page_size and page_num must be integers")
+
 
 def decode_base64(data):
     """Decode base64, padding being optional.
@@ -61,6 +72,7 @@ def decode_base64(data):
     if missing_padding != 0:
         data += '=' * (4 - missing_padding)
     return base64.decodebytes(data.encode()).decode()
+
 
 def get_allowed_service(token):
     """
@@ -77,9 +89,18 @@ def get_allowed_service(token):
     payload = token.split('.')[1]
     try:
         data = json.loads(decode_base64(payload))
-        return data['service']
+        # to ensure backward compatibility
+        if ('service' in data):
+            return data['service']
+        elif ('iss' in data):
+            iss = data['iss']
+            return iss[iss.rindex('/') + 1:]
+        else:
+            return None
     except Exception as ex:
-        raise ValueError("Invalid authentication token payload - not json object", ex)
+        raise ValueError(
+            "Invalid authentication token payload - not json object", ex)
+
 
 def encrypt(plain_text):
     # plain_text is padded so its length is multiple of cipher block size
@@ -90,6 +111,7 @@ def encrypt(plain_text):
 
     return encrypted
 
+
 def decrypt(encrypted):
 
     cipher = AES.new(CONFIG.crypto['key'], AES.MODE_CBC, CONFIG.crypto['iv'])
@@ -97,6 +119,7 @@ def decrypt(encrypted):
     plain_text = unpad(plain_text_pad)
 
     return plain_text
+
 
 def retrieve_auth_token(request):
     token = None
