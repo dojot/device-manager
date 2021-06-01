@@ -35,6 +35,6 @@ requests==2.18.4
 six==1.15.0
 SQLAlchemy==1.2.4
 typing-extensions==3.7.4.3
-urllib3==1.22
+urllib3==1.26.5
 Werkzeug==0.14.1
 zipp==3.4.0
