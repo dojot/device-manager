@@ -95,8 +95,7 @@ def get_allowed_service(token):
         elif ('iss' in data):
             iss = data['iss']
             return iss[iss.rindex('/') + 1:]
-        else:
-            return None
+        return None
     except Exception as ex:
         raise ValueError(
             "Invalid authentication token payload - not json object", ex)
