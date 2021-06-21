@@ -35,7 +35,6 @@ device = Blueprint('device', __name__)
 
 LOGGER = Log().color_log()
 
-
 def fill_overridden_flag(attrs):
     # Update all static attributes with "is_static_overridden" attribute
     for templateId in attrs:
@@ -46,6 +45,7 @@ def fill_overridden_flag(attrs):
                 for metadata in attr['metadata']:
                     if 'is_static_overridden' not in metadata and 'static_value' in metadata:
                         metadata['is_static_overridden'] = False
+
 
 
 def serialize_override_attrs(orm_overrides, attrs):
@@ -68,7 +68,6 @@ def serialize_override_attrs(orm_overrides, attrs):
                             metadata['static_value'] = override.static_value
                             metadata['is_static_overridden'] = True
 
-
 def serialize_full_device(orm_device, tenant, sensitive_data=False):
     data = device_schema.dump(orm_device)
     data['attrs'] = {}
@@ -85,9 +84,8 @@ def serialize_full_device(orm_device, tenant, sensitive_data=False):
                     if attr['id'] == psk_data.attr_id:
                         dec = decrypt(psk_data.psk)
                         attr['static_value'] = dec.decode('ascii')
-
+    
     return data
-
 
 def find_template(template_list, id):
     LOGGER.debug(f" Finding template from template list")
@@ -95,14 +93,12 @@ def find_template(template_list, id):
         if template.id == int(id):
             return template
 
-
 def create_orm_override(attr, orm_device, orm_template):
     try:
         target = int(attr['id'])
     except ValueError:
         LOGGER.error(f" Unknown attribute {attr['id']} in override list")
-        raise HTTPRequestError(
-            400, 'Unknown attribute {} in override list'.format(attr['id']))
+        raise HTTPRequestError(400, 'Unknown attribute {} in override list'.format(attr['id']))
 
     found = False
     for orm_attr in orm_template.attrs:
@@ -124,8 +120,7 @@ def create_orm_override(attr, orm_device, orm_template):
                         metadata_target = int(metadata['id'])
                         LOGGER.debug(f" Updated metadata {metadata_target}")
                     except ValueError:
-                        LOGGER.error(
-                            f" metadata attribute {attr['id']} in override list")
+                        LOGGER.error(f" metadata attribute {attr['id']} in override list")
                         raise HTTPRequestError(400, 'Unknown metadata attribute {} in override list'.format(
                             metadata['id']))
 
@@ -142,13 +137,12 @@ def create_orm_override(attr, orm_device, orm_template):
                                         static_value=metadata['static_value']
                                     )
                                     db.session.add(orm_override)
-                                    LOGGER.debug(
-                                        f" Added overrided form {orm_override}")
+                                    LOGGER.debug(f" Added overrided form {orm_override}")
+
 
     if not found:
         LOGGER.error(f" Unknown attribute {attr['id']} in override list")
-        raise HTTPRequestError(
-            400, 'Unknown attribute {} in override list'.format(target))
+        raise HTTPRequestError(400, 'Unknown attribute {} in override list'.format(target))
 
 
 def auto_create_template(json_payload, new_device):
@@ -156,30 +150,24 @@ def auto_create_template(json_payload, new_device):
         device_template = DeviceTemplate(
             label="device.%s template" % new_device.id)
         db.session.add(device_template)
-        LOGGER.debug(
-            f" Adding auto-created template {device_template} into database")
+        LOGGER.debug(f" Adding auto-created template {device_template} into database")
         new_device.templates = [device_template]
         load_attrs(json_payload['attrs'], device_template, DeviceAttr, db)
 
     # TODO: perhaps it'd be best if all ids were random hex strings?
     if ('attrs' in json_payload) and (new_device.templates is not None):
         for attr in json_payload['attrs']:
-            orm_template = find_template(
-                new_device.templates, attr['template_id'])
+            orm_template = find_template(new_device.templates, attr['template_id'])
             if orm_template is None:
                 LOGGER.error(f" Unknown template {orm_template} in attr list")
-                raise HTTPRequestError(
-                    400, 'Unknown template {} in attr list'.format(orm_template))
+                raise HTTPRequestError(400, 'Unknown template {} in attr list'.format(orm_template))
             create_orm_override(attr, new_device, orm_template)
-
 
 def parse_template_list(template_list, new_device):
     new_device.templates = []
     LOGGER.debug(f" Adding new template list for device {new_device}")
     for template_id in template_list:
-        new_device.templates.append(
-            assert_template_exists(template_id, db.session))
-
+        new_device.templates.append(assert_template_exists(template_id, db.session))
 
 def find_attribute(orm_device, attr_name, attr_type):
     """
@@ -192,7 +180,6 @@ def find_attribute(orm_device, attr_name, attr_type):
                 LOGGER.debug(f" retrieving attribute {attr}")
                 return attr
     return None
-
 
 class DeviceHandler(object):
 
@@ -271,8 +258,7 @@ class DeviceHandler(object):
         """
         tenant = init_tenant_context(token, db)
 
-        pagination = {'page': params.get('page_number'), 'per_page': params.get(
-            'per_page'), 'error_out': False}
+        pagination = {'page': params.get('page_number'), 'per_page': params.get('per_page'), 'error_out': False}
 
         SORT_CRITERION = {
             'label': Device.label,
@@ -288,8 +274,7 @@ class DeviceHandler(object):
             attr_label = []
             attr_label.append(DeviceAttr.label == parsed.group(1))
             # static value must be the override, if any
-            attr_label.append(text("coalesce(overrides.static_value, attrs.static_value)=:static_value ").bindparams(
-                static_value=parsed.group(2)))
+            attr_label.append(text("coalesce(overrides.static_value, attrs.static_value)=:static_value ").bindparams(static_value=parsed.group(2)))
             attr_filter.append(and_(*attr_label))
 
         query = params.get('attr_type')
@@ -304,58 +289,57 @@ class DeviceHandler(object):
         template_filter = []
         target_template = params.get('template')
         if target_template:
-            template_filter.append(
-                DeviceTemplateMap.template_id == target_template)
+            template_filter.append(DeviceTemplateMap.template_id == target_template)
 
-        if (attr_filter):  # filter by attr
+        if (attr_filter): #filter by attr
             LOGGER.debug(f" Filtering devices by {attr_filter}")
 
             page = db.session.query(Device) \
-                .join(DeviceTemplateMap, isouter=True)
+                            .join(DeviceTemplateMap, isouter=True)
 
             page = page.join(DeviceTemplate) \
-                .join(DeviceAttr, isouter=True) \
-                .join(DeviceOverride, (Device.id == DeviceOverride.did) & (DeviceAttr.id == DeviceOverride.aid), isouter=True)
-
-            page = page.filter(*label_filter) \
-                .filter(*template_filter) \
-                .filter(*attr_filter) \
-                .order_by(sortBy) \
-                .paginate(**pagination)
-
-        elif label_filter or template_filter:  # only filter by label or/and template
-            if label_filter:
-                LOGGER.debug(f"Filtering devices by label: {target_label}")
-
-            if template_filter:
-                LOGGER.debug(
-                    f"Filtering devices with template: {target_template}")
-
-            page = db.session.query(Device) \
-                .join(DeviceTemplateMap, isouter=True)
-
-            if sensitive_data:  # aditional joins for sensitive data
-                page = page.join(DeviceTemplate) \
                     .join(DeviceAttr, isouter=True) \
                     .join(DeviceOverride, (Device.id == DeviceOverride.did) & (DeviceAttr.id == DeviceOverride.aid), isouter=True)
 
             page = page.filter(*label_filter) \
-                .filter(*template_filter) \
-                .order_by(sortBy) \
-                .paginate(**pagination)
+                    .filter(*template_filter) \
+                    .filter(*attr_filter) \
+                    .order_by(sortBy) \
+                    .paginate(**pagination)
+
+
+        elif label_filter or template_filter: # only filter by label or/and template
+            if label_filter:
+                LOGGER.debug(f"Filtering devices by label: {target_label}")
+
+            if template_filter:
+                LOGGER.debug(f"Filtering devices with template: {target_template}")     
+            
+            page = db.session.query(Device) \
+                            .join(DeviceTemplateMap, isouter=True)
+
+            if sensitive_data: #aditional joins for sensitive data
+                page = page.join(DeviceTemplate) \
+                        .join(DeviceAttr, isouter=True) \
+                        .join(DeviceOverride, (Device.id == DeviceOverride.did) & (DeviceAttr.id == DeviceOverride.aid), isouter=True)
+
+            page = page.filter(*label_filter) \
+                    .filter(*template_filter) \
+                    .order_by(sortBy) \
+                    .paginate(**pagination)
 
         else:
             LOGGER.debug(f" Querying devices sorted by device id")
-            page = db.session.query(Device).order_by(
-                sortBy).paginate(**pagination)
+            page = db.session.query(Device).order_by(sortBy).paginate(**pagination)
 
         devices = []
-
+        
         if params.get('idsOnly').lower() in ['true', '1', '']:
             return DeviceHandler.get_only_ids(page)
 
         for d in page.items:
             devices.append(serialize_full_device(d, tenant, sensitive_data))
+
 
         result = {
             'pagination': {
@@ -410,7 +394,7 @@ class DeviceHandler(object):
         :param params: Parameters received from request (count, verbose, 
         content_type, data)
         :param token: The authorization token (JWT).
-
+        
         :return The created device or a list of device summary. This depends on
         which value the verbose (/?verbose=true) has - if true, only one device
         can be created ("count" argument can't be used or - at least - it must
@@ -446,16 +430,13 @@ class DeviceHandler(object):
             for i in range(0, count):
                 content_type = params.get('content_type')
                 data_request = params.get('data')
-                device_data, json_payload = parse_payload(
-                    content_type, data_request, device_schema)
+                device_data, json_payload = parse_payload(content_type, data_request, device_schema)
                 validate_repeated_attrs(json_payload)
                 device_data['id'] = DeviceHandler.generate_device_id()
-                device_data['label'] = DeviceHandler.indexed_label(
-                    count, c_length, device_data['label'], i)
+                device_data['label'] = DeviceHandler.indexed_label(count, c_length, device_data['label'], i)
                 device_data.pop('templates', None)
                 orm_device = Device(**device_data)
-                parse_template_list(json_payload.get(
-                    'templates', []), orm_device)
+                parse_template_list(json_payload.get('templates', []), orm_device)
                 auto_create_template(json_payload, orm_device)
                 db.session.add(orm_device)
                 orm_devices.append(orm_device)
@@ -464,6 +445,7 @@ class DeviceHandler(object):
             handle_consistency_exception(error)
         except ValidationError as error:
             raise HTTPRequestError(400, error.messages)
+
 
         for orm_device in orm_devices:
             devices.append(
@@ -476,10 +458,8 @@ class DeviceHandler(object):
             full_device = serialize_full_device(orm_device, tenant)
 
             # Updating handlers
-            kafka_handler_instance = cls.kafka.getInstance(
-                cls.kafka.kafkaNotifier)
-            kafka_handler_instance.create(
-                full_device, meta={"service": tenant})
+            kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
+            kafka_handler_instance.create(full_device, meta={"service": tenant})
 
         if verbose:
             result = {
@@ -541,7 +521,7 @@ class DeviceHandler(object):
         db.session.commit()
 
         results = {
-            'result': 'ok',
+            'result': 'ok', 
             'removed_devices': json_devices
         }
 
@@ -567,8 +547,7 @@ class DeviceHandler(object):
             content_type = params.get('content_type')
             data_request = params.get('data')
 
-            device_data, json_payload = parse_payload(
-                content_type, data_request, device_schema)
+            device_data, json_payload = parse_payload(content_type, data_request, device_schema)
             validate_repeated_attrs(json_payload)
 
             tenant = init_tenant_context(token, db)
@@ -579,8 +558,7 @@ class DeviceHandler(object):
             # handled separately by parse_template_list
             device_data.pop('templates')
             updated_orm_device = Device(**device_data)
-            parse_template_list(json_payload.get(
-                'templates', []), updated_orm_device)
+            parse_template_list(json_payload.get('templates', []), updated_orm_device)
             auto_create_template(json_payload, updated_orm_device)
             updated_orm_device.id = device_id
             updated_orm_device.updated = datetime.now()
@@ -645,14 +623,12 @@ class DeviceHandler(object):
 
         if not invalid_attrs:
             LOGGER.debug(f' Sending configuration message through Kafka.')
-            kafka_handler_instance = cls.kafka.getInstance(
-                cls.kafka.kafkaNotifier)
+            kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
             kafka_handler_instance.configure(payload, meta)
             LOGGER.debug(f' Configuration sent.')
             result = {f'status': 'configuration sent to device'}
         else:
-            LOGGER.warning(
-                f' invalid attributes detected in command: {invalid_attrs}')
+            LOGGER.warning(f' invalid attributes detected in command: {invalid_attrs}')
             result = {
                 'status': 'some of the attributes are not configurable',
                 'attrs': invalid_attrs
@@ -749,8 +725,8 @@ class DeviceHandler(object):
             db.session.query(Device)
             .join(DeviceTemplateMap)
             .filter_by(template_id=template_id)
-            .paginate(page=params.get('page_number'),
-                      per_page=params.get('per_page'), error_out=False)
+            .paginate(page=params.get('page_number'), 
+                per_page=params.get('per_page'), error_out=False)
         )
         devices = []
         for d in page.items:
@@ -796,8 +772,7 @@ class DeviceHandler(object):
         # checks if the key length has been specified
         # todo remove this magic number
         if key_length > 1024 or key_length <= 0:
-            raise HTTPRequestError(
-                400, "key_length must be greater than 0 and lesser than {}".format(1024))
+            raise HTTPRequestError(400, "key_length must be greater than 0 and lesser than {}".format(1024))
 
         is_all_psk_attr_valid = False
         target_attrs_data = []
@@ -813,16 +788,16 @@ class DeviceHandler(object):
 
             if not is_all_psk_attr_valid:
                 raise HTTPRequestError(400, "Not found some attributes, "
-                                       "please check them")
+                    "please check them")
 
             if len(target_attributes) != len(target_attrs_data):
                 if not is_all_psk_attr_valid:
                     raise HTTPRequestError(400,
-                                           "Some attribute is not a 'psk' type_value")
+                                    "Some attribute is not a 'psk' type_value")
                 else:
                     raise HTTPRequestError(400, "Not found some attributes, "
-                                           "please check them")
-        else:  # second case: if there are not specified attributes
+                        "please check them")
+        else: # second case: if there are not specified attributes
             for template_id in device["templates"]:
                 for attr in device["attrs"][template_id]:
                     if attr["value_type"] == "psk":
@@ -849,7 +824,7 @@ class DeviceHandler(object):
             else:
                 psk_entry.psk = encrypted_psk
 
-            result.append({'attribute': attr["label"], 'psk': psk_hex})
+            result.append( {'attribute': attr["label"], 'psk': psk_hex} )
 
         device_orm.updated = datetime.now()
         db.session.commit()
@@ -880,8 +855,7 @@ class DeviceHandler(object):
 
         src_device_orm = assert_device_exists(src_device_id, db.session)
         if not src_device_orm:
-            raise HTTPRequestError(
-                404, "No such device: {}".format(src_device_id))
+            raise HTTPRequestError(404, "No such device: {}".format(src_device_id))
 
         src_device = serialize_full_device(src_device_orm, tenant, True)
 
@@ -896,16 +870,14 @@ class DeviceHandler(object):
                         break
                     else:
                         raise HTTPRequestError(400,
-                                               "Attribute {} is not a 'psk' type_value".format(src_attr))
+                                "Attribute {} is not a 'psk' type_value".format(src_attr))
 
         if not found_attr:
-            raise HTTPRequestError(
-                404, "Not found attributes {}".format(src_attr))
+            raise HTTPRequestError(404, "Not found attributes {}".format(src_attr))
 
         dest_device_orm = assert_device_exists(dest_device_id, db.session)
         if not dest_device_orm:
-            raise HTTPRequestError(
-                404, "No such device: {}".format(dest_device_id))
+            raise HTTPRequestError(404, "No such device: {}".format(dest_device_id))
 
         dest_device = serialize_full_device(dest_device_orm, tenant, True)
 
@@ -920,25 +892,23 @@ class DeviceHandler(object):
                         break
                     else:
                         raise HTTPRequestError(400,
-                                               "Attribute {} is not a 'psk' type_value".format(dest_attr))
+                                "Attribute {} is not a 'psk' type_value".format(dest_attr))
 
         if not found_attr:
-            raise HTTPRequestError(
-                404, "Not found attributes {}".format(dest_attr))
+            raise HTTPRequestError(404, "Not found attributes {}".format(dest_attr))
 
         # copy the pre shared key
         src_psk_entry = DeviceAttrsPsk.query.filter_by(device_id=src_device["id"],
-                                                       attr_id=src_attr_ref["id"]).first()
+                                                    attr_id=src_attr_ref["id"]).first()
         if not src_psk_entry:
-            raise HTTPRequestError(
-                400, "There is not a psk generated to {}".format(src_attr))
+            raise HTTPRequestError(400, "There is not a psk generated to {}".format(src_attr))
 
         dest_psk_entry = DeviceAttrsPsk.query.filter_by(device_id=dest_device["id"],
-                                                        attr_id=dest_attr_ref["id"]).first()
+            attr_id=dest_attr_ref["id"]).first()
         if not dest_psk_entry:
             db.session.add(DeviceAttrsPsk(device_id=dest_device["id"],
-                                          attr_id=dest_attr_ref["id"],
-                                          psk=src_psk_entry.psk))
+                                            attr_id=dest_attr_ref["id"],
+                                            psk=src_psk_entry.psk))
         else:
             dest_psk_entry.psk = src_psk_entry.psk
 
@@ -1022,7 +992,6 @@ def flask_create_device():
 
         return format_response(e.error_code, e.message)
 
-
 @device.route('/device', methods=['DELETE'])
 def flask_delete_all_device():
     """
@@ -1044,11 +1013,10 @@ def flask_delete_all_device():
 
         return format_response(e.error_code, e.message)
 
-
 @device.route('/device/<device_id>', methods=['GET'])
 def flask_get_device(device_id):
     try:
-        # retrieve the authorization token
+         # retrieve the authorization token
         token = retrieve_auth_token(request)
 
         result = DeviceHandler.get_device(token, device_id)
@@ -1060,7 +1028,6 @@ def flask_get_device(device_id):
             return make_response(jsonify(e.message), e.error_code)
 
         return format_response(e.error_code, e.message)
-
 
 @device.route('/device/<device_id>', methods=['DELETE'])
 def flask_remove_device(device_id):
@@ -1128,11 +1095,10 @@ def flask_configure_device(device_id):
 @device.route('/device/<device_id>/template/<template_id>', methods=['POST'])
 def flask_add_template_to_device(device_id, template_id):
     try:
-        # retrieve the authorization token
+         # retrieve the authorization token
         token = retrieve_auth_token(request)
 
-        LOGGER.info(
-            f' Adding template with id {template_id} in the device {device_id}.')
+        LOGGER.info(f' Adding template with id {template_id} in the device {device_id}.')
         result = DeviceHandler.add_template_to_device(
             token, device_id, template_id)
         return make_response(jsonify(result), 200)
@@ -1150,8 +1116,7 @@ def flask_remove_template_from_device(device_id, template_id):
         # retrieve the authorization token
         token = retrieve_auth_token(request)
 
-        LOGGER.info(
-            f' Removing template with id {template_id} in the device {device_id}.')
+        LOGGER.info(f' Removing template with id {template_id} in the device {device_id}.')
         result = DeviceHandler.remove_template_from_device(
             token, device_id, template_id)
         return make_response(jsonify(result), 200)
@@ -1209,8 +1174,7 @@ def flask_gen_psk(device_id):
                                        key_length,
                                        target_attributes)
 
-        LOGGER.info(
-            f' Successfully generated psk for the device: {device_id}.')
+        LOGGER.info(f' Successfully generated psk for the device: {device_id}.')
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
         LOGGER.error(f' {e.message} - {e.error_code}.')
@@ -1228,18 +1192,18 @@ def flask_copy_psk(device_id, attr_label):
 
         # retrieve the parameters
         if ((not 'from_dev_id' in request.args.keys()) or
-                (not 'from_attr_label' in request.args.keys())):
+            (not 'from_attr_label' in request.args.keys())):
             raise HTTPRequestError(400, "Missing mandatory parameter: from_dev_id "
-                                   "or/and from_attr_label")
+                "or/and from_attr_label")
 
         from_dev_id = request.args['from_dev_id']
         from_attr_label = request.args['from_attr_label']
 
         DeviceHandler.copy_psk(token,
-                               from_dev_id,
-                               from_attr_label,
-                               device_id,
-                               attr_label)
+                                from_dev_id,
+                                from_attr_label,
+                                device_id,
+                                attr_label)
 
         return make_response("", 204)
     except HTTPRequestError as e:
@@ -1279,7 +1243,7 @@ def flask_internal_get_devices():
 
         result = DeviceHandler.get_devices(token, params, True)
         LOGGER.info(f' Getting known internal devices.')
-
+        
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
         LOGGER.error(f' {e.message} - {e.error_code}.')
