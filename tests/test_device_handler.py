@@ -323,7 +323,7 @@ class TestDeviceHandler(unittest.TestCase):
                 with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
                     result = DeviceHandler.configure_device(params, 'test_device_id', token)
                     self.assertIsNotNone(result)
-                    self.assertEqual(result[' status'], 'configuration sent to device')
+                    self.assertEqual(result['status'], 'configuration sent to device')
                 
                 data = '{"topic": "/admin/efac/config", "attrs": {"test_attr": "xpto"}}'
                 params = {'data': data}

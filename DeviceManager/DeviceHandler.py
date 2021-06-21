@@ -626,7 +626,7 @@ class DeviceHandler(object):
             kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
             kafka_handler_instance.configure(payload, meta)
             LOGGER.debug(f' Configuration sent.')
-            result = {f' status': 'configuration sent to device'}
+            result = {f'status': 'configuration sent to device'}
         else:
             LOGGER.warning(f' invalid attributes detected in command: {invalid_attrs}')
             result = {
