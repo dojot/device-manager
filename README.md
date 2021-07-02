@@ -62,7 +62,7 @@ docker-compose -f local/compose.yml -p devm up -d
 # Builds devm container (this may take a while)
 docker build -f Dockerfile -t local/devicemanager .
 # Runs devm manually, using the infra that's been just created
-# Must pass the environment variables of cryto to run
+# Must pass the environment variables of crypto to run
 docker run --rm -it --network devm_default -e DEV_MNGR_CRYPTO_PASS=${CRYPTO_PASS} -e DEV_MNGR_CRYPTO_IV=${CRYPTO_IV} -e DEV_MNGR_CRYPTO_SALT=${CRYPTO_SALT} local/devicemanager
 #
 # Example: docker run --rm -it --network devm_default -e DEV_MNGR_CRYPTO_PASS='kamehameHA'  -e DEV_MNGR_CRYPTO_IV=1234567890123456 -e DEV_MNGR_CRYPTO_SALT='shuriken' local/devicemanager
