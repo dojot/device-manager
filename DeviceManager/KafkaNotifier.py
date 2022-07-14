@@ -50,29 +50,7 @@ class KafkaNotifier:
         self.topic_map = {}
 
     def get_topic(self, service, subject):
-        if service in self.topic_map.keys():
-            if subject in self.topic_map[service].keys():
-                return self.topic_map[service][subject]
-
-        target = "{}/topic/{}".format(CONFIG.data_broker, subject)
-        userinfo = {
-            "username": "device-manager",
-            "service": service
-        }
-
-        jwt = "{}.{}.{}".format(base64.b64encode("model".encode()).decode(),
-                                base64.b64encode(json.dumps(
-                                    userinfo).encode()).decode(),
-                                base64.b64encode("signature".encode()).decode())
-
-        response = requests.get(target, headers={"authorization": jwt})
-        if 200 <= response.status_code < 300:
-            payload = response.json()
-            if self.topic_map.get(service, None) is None:
-                self.topic_map[service] = {}
-            self.topic_map[service][subject] = payload['topic']
-            return payload['topic']
-        return None
+        return "{}.{}".format(service, subject);
 
     def send_notification(self, event, device, meta):
         # TODO What if Kafka is not yet up?
