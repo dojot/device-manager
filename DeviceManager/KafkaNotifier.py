@@ -49,15 +49,18 @@ class KafkaNotifier:
         # Maps services to their managed topics
         self.topic_map = {}
 
-    def get_topic(self, service, subject):
-        return "{}.{}".format(service, subject);
+    def get_topic(self, service, subject, suffix = ""):
+        topic = "{}.{}".format(service, subject)
+        if( suffix != "" ):
+            topic = "{}.{}".format(topic, suffix)        
+        return topic
 
-    def send_notification(self, event, device, meta):
+    def send_notification(self, event, device, meta, suffix = ""):
         # TODO What if Kafka is not yet up?
 
         full_msg = NotificationMessage(event, device, meta)
         try:
-            topic = self.get_topic(meta['service'], CONFIG.subject)
+            topic = self.get_topic(meta['service'], CONFIG.subject, suffix)
             LOGGER.debug(f" topic for {CONFIG.subject} is {topic}")
             if topic is None:
                 LOGGER.error(f" Failed to retrieve named topic to publish to")

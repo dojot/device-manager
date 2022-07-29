@@ -27,6 +27,14 @@ class TestKafkaNotifier(unittest.TestCase):
             self.assertIsNotNone(result)
             self.assertEqual(result, 'admin.dojot.device-manager.device')
     
+    def test_get_topic_with_suffix(self):
+        with patch.object(KafkaNotifier, "__init__", lambda x: None):
+            KafkaNotifier.topic_map = {}
+
+            result = KafkaNotifier().get_topic('admin', 'dojot.device-manager.device', "configure")
+            self.assertIsNotNone(result)
+            self.assertEqual(result, 'admin.dojot.device-manager.device.configure')
+    
     def test_send_notification(self):
         data = {'label': 'test_device', 'id': 'test_device_id', 'templates': [1], 'attrs': {}}
 
