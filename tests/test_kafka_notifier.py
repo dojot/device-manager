@@ -23,11 +23,9 @@ class TestKafkaNotifier(unittest.TestCase):
         with patch.object(KafkaNotifier, "__init__", lambda x: None):
             KafkaNotifier.topic_map = {}
 
-            with patch("requests.get") as request_mock:
-                request_mock.return_value = Mock(status_code=200, json=Mock(return_value={'topic': '83a257de-c421-4529-b42d-5976def7b526'}))
-                result = KafkaNotifier().get_topic('admin', 'dojot.device-manager.device')
-                self.assertIsNotNone(result)
-                self.assertEqual(result, '83a257de-c421-4529-b42d-5976def7b526')
+            result = KafkaNotifier().get_topic('admin', 'dojot.device-manager.device')
+            self.assertIsNotNone(result)
+            self.assertEqual(result, 'admin.dojot.device-manager.device')
     
     def test_send_notification(self):
         data = {'label': 'test_device', 'id': 'test_device_id', 'templates': [1], 'attrs': {}}
