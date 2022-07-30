@@ -49,37 +49,18 @@ class KafkaNotifier:
         # Maps services to their managed topics
         self.topic_map = {}
 
-    def get_topic(self, service, subject):
-        if service in self.topic_map.keys():
-            if subject in self.topic_map[service].keys():
-                return self.topic_map[service][subject]
+    def get_topic(self, service, subject, suffix = ""):
+        topic = "{}.{}".format(service, subject)
+        if( suffix != "" ):
+            topic = "{}.{}".format(topic, suffix)        
+        return topic
 
-        target = "{}/topic/{}".format(CONFIG.data_broker, subject)
-        userinfo = {
-            "username": "device-manager",
-            "service": service
-        }
-
-        jwt = "{}.{}.{}".format(base64.b64encode("model".encode()).decode(),
-                                base64.b64encode(json.dumps(
-                                    userinfo).encode()).decode(),
-                                base64.b64encode("signature".encode()).decode())
-
-        response = requests.get(target, headers={"authorization": jwt})
-        if 200 <= response.status_code < 300:
-            payload = response.json()
-            if self.topic_map.get(service, None) is None:
-                self.topic_map[service] = {}
-            self.topic_map[service][subject] = payload['topic']
-            return payload['topic']
-        return None
-
-    def send_notification(self, event, device, meta):
+    def send_notification(self, event, device, meta, suffix = ""):
         # TODO What if Kafka is not yet up?
 
         full_msg = NotificationMessage(event, device, meta)
         try:
-            topic = self.get_topic(meta['service'], CONFIG.subject)
+            topic = self.get_topic(meta['service'], CONFIG.subject, suffix)
             LOGGER.debug(f" topic for {CONFIG.subject} is {topic}")
             if topic is None:
                 LOGGER.error(f" Failed to retrieve named topic to publish to")
