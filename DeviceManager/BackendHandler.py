@@ -7,6 +7,7 @@ import traceback
 import requests
 from DeviceManager.utils import HTTPRequestError
 from DeviceManager.KafkaNotifier import KafkaNotifier, DeviceEvent
+from DeviceManager.conf import CONFIG
 import logging
 from datetime import datetime
 import time
@@ -88,7 +89,7 @@ class KafkaHandler:
             Publishes event to kafka broker, notifying device configuration
         """
         LOGGER.info(f" Publishing configure event to Kafka")
-        self.kafkaNotifier.send_notification(DeviceEvent.CONFIGURE, device, meta)
+        self.kafkaNotifier.send_notification(DeviceEvent.CONFIGURE, device, meta, CONFIG.device_actuation_subject)
 
 class KafkaInstanceHandler:
     

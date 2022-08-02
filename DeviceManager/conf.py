@@ -16,9 +16,11 @@ class Config(object):
                  broker="http://data-broker",
                  subject="dojot.device-manager.device",
                  device_subject="device-data",
+                 device_actuation_subject="actuation",
                  status_timeout="5",
                  create_db=True,
                  log_level="INFO"):
+                 
         # Postgres configuration data
         self.dbname = os.environ.get('DBNAME', db)
         self.dbhost = os.environ.get('DBHOST', dbhost)
@@ -39,6 +41,7 @@ class Config(object):
 
         # Which subject to publish new device information to
         self.subject = os.environ.get('SUBJECT', subject)
+        self.device_actuation_subject = os.environ.get('DEVICE_ACTUATION_SUBJECT', device_actuation_subject)
         self.device_subject = os.environ.get('DEVICE_SUBJECT', device_subject)
         self.status_timeout = int(os.environ.get('STATUS_TIMEOUT', status_timeout))
 
