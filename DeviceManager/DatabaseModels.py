@@ -68,7 +68,7 @@ class DeviceTemplate(db.Model):
     __tablename__ = 'templates'
 
     id = db.Column(db.Integer, db.Sequence('template_id'), primary_key=True)
-    label = db.Column(db.String(128), nullable=False)
+    label = db.Column(db.String(128), nullable=False, unique=True)
     created = db.Column(db.DateTime, default=datetime.now)
     updated = db.Column(db.DateTime, onupdate=datetime.now)
 
@@ -99,7 +99,7 @@ class Device(db.Model):
     __tablename__ = 'devices'
 
     id = db.Column(db.String(8), unique=True, nullable=False, primary_key=True)
-    label = db.Column(db.String(128), nullable=False)
+    label = db.Column(db.String(128), nullable=False, unique=True)
     created = db.Column(db.DateTime, default=datetime.now)
     updated = db.Column(db.DateTime, onupdate=datetime.now)
 
