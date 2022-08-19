@@ -10,6 +10,8 @@ from DeviceManager.Logger import Log
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = CONFIG.get_db_url()
 app.config['SQLALCHEMY_BINDS'] = {}
+# SQLALCHEMY_ECHO - habilitar o log das SQL do framework SQLALCHEMY - True
+app.config['SQLALCHEMY_ECHO'] = False
 
 LOGGER = Log().color_log()
 
