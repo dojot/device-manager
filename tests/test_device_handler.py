@@ -11,7 +11,7 @@ from DeviceManager.DatabaseModels import assert_device_exists
 from DeviceManager.BackendHandler import KafkaInstanceHandler
 import DeviceManager.DatabaseModels
 from DeviceManager.SerializationModels import ValidationError
-
+from DeviceManager.ImportHandler import ImportHandler
 from .token_test_generator import generate_token
 
 from alchemy_mock.mocking import AlchemyMagicMock, UnifiedAlchemyMagicMock
@@ -448,3 +448,55 @@ class TestDeviceHandler(unittest.TestCase):
                     mock_getDevice.return_value = {'id': 140110840862312, 'created': '2019-08-29T18:18:07.801602+00:00', 'attrs': {}}
                     result = flask_internal_get_device('test_device_id')
                     self.assertIsNotNone(result.response)
+
+    @patch('DeviceManager.DeviceHandler.db')
+    @patch('flask_sqlalchemy._QueryProperty.__get__')
+    def test_filter_device_label(self, db_mock, query_property_getter_mock):
+        db_mock.session = AlchemyMagicMock()
+        token = generate_token()
+        
+        data = '{"label":"device001","templates":[1]}'
+        with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
+            mock_device_id.return_value = 'device001_id'
+
+            with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
+                mock_validate_device_id.return_value = True
+        
+                with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
+                
+                     params = {'count': '1', 'verbose': 'false',
+                                    'content_type': 'application/json', 'data': data}
+                     result = DeviceHandler.create_device(params, token)
+
+                     params_query = {'page_number': 6, 'per_page': 0, 
+                                    'attr': [], 'attr_type': [],'sortBy': 'label', 
+                                    'idsOnly': 'false', 'label': 'de'}
+                     result = DeviceHandler.get_devices(token, params_query)
+
+                     self.assertIsNotNone(result)
+   
+    @patch('DeviceManager.DeviceHandler.db')
+    @patch('flask_sqlalchemy._QueryProperty.__get__')
+    def test_filter_device_label_template(self, db_mock, query_property_getter_mock):
+        db_mock.session = AlchemyMagicMock()
+        token = generate_token()
+        data = '{"label":"device002","templates":[1]}'
+
+        with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
+            mock_device_id.return_value = 'device002_id'
+
+            with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
+                mock_validate_device_id.return_value = True
+     
+                with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
+                    
+                    params = {'count': '1', 'verbose': 'false',
+                                        'content_type': 'application/json', 'data': data}
+                    result = DeviceHandler.create_device(params, token)
+                    
+                    params_query = {'page_number': 6, 'per_page': 0, 
+                                    'attr': [], 'attr_type': [],'sortBy': 'label',
+                                    'idsOnly': 'false', 'label': 'de','template': '1'}
+                    result = DeviceHandler.get_devices(token, params_query)
+
+                    self.assertIsNotNone(result)

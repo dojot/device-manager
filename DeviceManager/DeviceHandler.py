@@ -322,15 +322,16 @@ class DeviceHandler(object):
 
 
         elif label_filter or template_filter: # only filter by label or/and template
+            
+            page = db.session.query(Device)
+            
             if label_filter:
                 LOGGER.debug(f"Filtering devices by label: {target_label}")
 
             if template_filter:
+                page = page.join(DeviceTemplateMap, isouter=True)
                 LOGGER.debug(f"Filtering devices with template: {target_template}")     
             
-            page = db.session.query(Device) \
-                            .join(DeviceTemplateMap, isouter=True)
-
             if sensitive_data: #aditional joins for sensitive data
                 page = page.join(DeviceTemplate) \
                         .join(DeviceAttr, isouter=True) \
