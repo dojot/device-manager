@@ -307,7 +307,7 @@ class TestDeviceHandler(unittest.TestCase):
                         result = DeviceHandler.create_device(params, token)
 
     @patch('flask_sqlalchemy._QueryProperty.__get__')
-    def test_create_device_integrity_errors(self,  query_get_mock):
+    def test_create_device_integrity_errors(self, query_get_mock):
         with patch('DeviceManager.DeviceHandler.init_tenant_context') as mock_init_tenant_context:
             mock_init_tenant_context.return_value = 'admin'
             with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
