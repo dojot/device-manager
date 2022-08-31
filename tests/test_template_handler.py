@@ -10,7 +10,7 @@ from DeviceManager.TemplateHandler import TemplateHandler, flask_get_templates, 
 from DeviceManager.utils import HTTPRequestError
 from DeviceManager.BackendHandler import KafkaInstanceHandler
 from datetime import datetime
-
+from sqlalchemy.exc import IntegrityError
 
 from .token_test_generator import generate_token
 
@@ -76,6 +76,43 @@ class TestTemplateHandler(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result['result'], 'ok')
         self.assertIsNotNone(result['template'])
+
+    def test_create_template_integrity_errors(self):
+        with patch('DeviceManager.TemplateHandler.init_tenant_context') as mock_init_tenant_context:
+            mock_init_tenant_context.return_value = 'admin'
+            with patch('DeviceManager.TemplateHandler.db') as db_mock:
+                diag = Exception()
+                diag.message_primary = 'test'
+                orig = Exception()
+                orig.diag = diag
+                
+                db_mock.session = AlchemyMagicMock()
+                db_mock.session.commit = Mock()
+                db_mock.session.commit.side_effect = IntegrityError(statement='test', params='test', orig=orig)
+
+                token = generate_token()
+                
+                data = """{
+                    "label": "SensorModel",
+                    "attrs": [
+                        {
+                            "label": "temperature",
+                            "type": "dynamic",
+                            "value_type": "float"
+                        },
+                        {
+                            "label": "model-id",
+                            "type": "static",
+                            "value_type": "string",
+                            "static_value": "model-001"
+                        }
+                    ]
+                }"""
+
+                params_query = {'content_type': 'application/json', 'data': data}
+
+                with self.assertRaises(HTTPRequestError):
+                    TemplateHandler.create_template(params_query, token)
 
     @patch('DeviceManager.TemplateHandler.db')
     def test_get_template(self, db_mock):
