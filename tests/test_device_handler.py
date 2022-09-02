@@ -3,6 +3,7 @@ import json
 import unittest
 from unittest.mock import Mock, MagicMock, patch, call
 from flask import Flask
+from sqlalchemy.exc import IntegrityError
 
 from DeviceManager.DeviceHandler import DeviceHandler, flask_delete_all_device, flask_get_device, flask_remove_device, flask_add_template_to_device, flask_remove_template_from_device, flask_gen_psk,flask_internal_get_device
 from DeviceManager.utils import HTTPRequestError
@@ -304,6 +305,33 @@ class TestDeviceHandler(unittest.TestCase):
 
                     with self.assertRaises(HTTPRequestError):
                         result = DeviceHandler.create_device(params, token)
+
+    @patch('flask_sqlalchemy._QueryProperty.__get__')
+    def test_create_device_integrity_errors(self, query_get_mock):
+        with patch('DeviceManager.DeviceHandler.init_tenant_context') as mock_init_tenant_context:
+            mock_init_tenant_context.return_value = 'admin'
+            with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
+                mock_device_id.return_value = 'test_device_id'
+                with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
+                    mock_validate_device_id.return_value = True
+                    with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
+                        with patch('DeviceManager.DeviceHandler.db') as db_mock:
+                            diag = Exception()
+                            diag.message_primary = 'test'
+                            orig = Exception()
+                            orig.diag = diag
+                            
+                            db_mock.session = AlchemyMagicMock()
+                            db_mock.session.commit = Mock()
+                            db_mock.session.commit.side_effect = IntegrityError(statement='test', params='test', orig=orig)
+
+                            token = generate_token()
+                            data = '{"label":"test_device","templates":[1]}'
+                            params = {'count': '1', 'verbose': 'false',
+                                'content_type': 'application/json', 'data': data}
+
+                            with self.assertRaises(HTTPRequestError):
+                                DeviceHandler.create_device(params, token)
 
     @patch('DeviceManager.DeviceHandler.db')
     @patch('flask_sqlalchemy._QueryProperty.__get__')

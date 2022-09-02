@@ -211,9 +211,9 @@ class TemplateHandler():
         try:
             db.session.commit()
             LOGGER.debug(f" Created template in database")
-        except IntegrityError as e:
-            LOGGER.error(f' {e}')
-            raise HTTPRequestError(400, 'Template attribute constraints are violated by the request')
+        except IntegrityError as error:
+            LOGGER.error(f' {error}')
+            handle_consistency_exception(error)
 
         results = {
             'template': template_schema.dump(loaded_template),
