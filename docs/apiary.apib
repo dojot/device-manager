@@ -100,7 +100,6 @@ Register a new template
                 }
             }
 
-
 + Response 400 (application/json)
 
             {
@@ -112,6 +111,19 @@ Register a new template
                 "message": "failed to parse input"
             }
 
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"templates_label_key\"",
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"attrs_template_id_type_label_key\"",
+                "status": 400
+            }
 
 ### Get the current list of templates [GET /template{?page_size,page_num,attr_format,attr,attr_type,label,sortBy}]
 
@@ -498,6 +510,20 @@ updated.
                 "message": "No such template: 123",
                 "status": 404
             }
+            
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"templates_label_key\"",
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"attrs_template_id_type_label_key\"",
+                "status": 400
+            }
 
 ### Delete template [DELETE /template/{id}]
 
@@ -648,6 +674,13 @@ attributes to be applied to this device.
                 "status": 400
             }
 
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"devices_label_key\"",
+                "status": 400
+            }
+
 + Response 404 (application/json)
 
             {
@@ -747,6 +780,13 @@ attributes to be applied to this device.
                 "message": [
                     "Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F)"
                 ],
+                "status": 400
+            }
+
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"devices_label_key\"",
                 "status": 400
             }
 
@@ -1160,6 +1200,12 @@ Updates a device's configuration
                 "status": 400
             }
 
++ Response 400 (application/json)
+
+            {
+                "message": "duplicate key value violates unique constraint \"devices_label_key\"",
+                "status": 400
+            }
 
 ### Configure device [PUT /device/{id}/actuate]
 

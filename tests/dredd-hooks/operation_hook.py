@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import dredd_hooks as hooks
+from uuid import uuid4
 import json
 import re
 
@@ -17,13 +18,15 @@ class Request:
         self.args = data['args']
         self.data = data['body']
 
+def generate_unique_label(prefix):
+    return f"{prefix}_{uuid4()}"
 
 def sort_attributes(device, attribute):
     device[attribute] = sorted(device[attribute], key=lambda k: k['label'])
 
 def create_sample_template():
     template = {
-        "label": "SensorModel",
+        "label": generate_unique_label("SensorModel"),
         "attrs": [
             {
                 "label": "temperature",
@@ -68,7 +71,7 @@ def create_sample_template():
 
 def create_actuator_template():
     template = {
-        "label": "SensorModel",
+        "label": generate_unique_label("SensorModel"),
         "attrs": [
             {
                 "label": "temperature",
@@ -168,7 +171,7 @@ def create_single_device(transaction):
         transaction['proprietary'] = {}
     transaction['proprietary']['template_id'] = template_id
     device = {
-        "label": "test_device",
+        "label": generate_unique_label("test_device"),
         "templates": [template_id]
     }
     req = {
@@ -202,7 +205,7 @@ def create_actuator_device(transaction):
         transaction['proprietary'] = {}
     transaction['proprietary']['template_id'] = template_id
     device = {
-        "label": "test_device",
+        "label": generate_unique_label("test_device"),
         "templates": [template_id]
     }
     req = {

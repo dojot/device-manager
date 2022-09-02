@@ -133,7 +133,7 @@ The information model used for both “real” and virtual devices is as followi
 | **attrs**     | Map of attributes                                       | read-only  | No       | Map of device's attributes (check the attributes in the next table)
 | **created**   | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device creation time.
 | **id**        | String (length of 8 bytes)                              | read-only  | No       | Unique identifier for the device.
-| **label**     | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the device's identification.
+| **label**     | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the device's identification. The label is unique for this device.
 | **templates** | Strings list                                            | read-only  | No       | List of template IDs used by the device.
 | **updated**   | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device last update time.
 
@@ -214,7 +214,7 @@ An example of such structure would be:
 ### **Template**
 
 All devices are based on a **template**, which can be thought as a blueprint: all devices built
-using the same template will have the same characteristics. Templates in dojot have one label (any
+using the same template will have the same characteristics. Templates in dojot have one unique label (any
 alphanumeric sequence), a list of attributes which will hold all the device emitted information, and
 optionally a few special attributes which will indicate how the device communicates, including
 transmission methods (protocol, ports, etc.) and message formats.
@@ -239,7 +239,7 @@ The information model used for templates is:
 | **created**      | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device creation time.
 | **data_attrs**   | Map of attributes                                       | read-write | No       | Stores attributes with the types `dynamic`, `static` and `actuator`.
 | **id**           | String (length of 8 bytes)                              | read-write | No       | Unique identifier for the template.
-| **label**        | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the template's identification.
+| **label**        | String (length of 128 bytes)                            | read-write | Yes      | An user-defined label to facilitate the template's identification. The label is unique for this template.
 | **updated**      | DateTime (with timezone and µs precision) in ISO format | read-only  | No       | Device last update time.
 
 An example template structure:
