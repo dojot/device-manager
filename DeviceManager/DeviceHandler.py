@@ -10,7 +10,7 @@ from datetime import datetime
 import secrets
 from flask import request, jsonify, Blueprint, make_response
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import or_, and_, func, text
+from sqlalchemy import or_, and_, func, text, desc
 
 from DeviceManager.utils import *
 from DeviceManager.utils import create_id, get_pagination, format_response
@@ -261,10 +261,23 @@ class DeviceHandler(object):
         pagination = {'page': params.get('page_number'), 'per_page': params.get('per_page'), 'error_out': False}
 
         SORT_CRITERION = {
+            'id': Device.id,
+            'asc:id': Device.id,
+            'desc:id': desc(Device.id),
             'label': Device.label,
-            None: Device.id
+            'asc:label': Device.label,
+            'desc:label': desc(Device.label),
+            'created': Device.created,
+            'asc:created': Device.created,
+            'desc:created': desc(Device.created),
+            'updated': Device.updated,
+            'asc:updated': Device.updated,
+            'desc:updated': desc(Device.updated),
+            None: None
         }
-        sortBy = SORT_CRITERION.get(params.get('sortBy'))
+        
+        sortBy = SORT_CRITERION.get(params.get('sortBy'), None)
+        LOGGER.debug(f" Sorting devices by {sortBy}")
 
         attr_filter = []
         query = params.get('attr')

@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify, make_response
 from flask_sqlalchemy import BaseQuery, Pagination
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import text, collate, func
+from sqlalchemy import desc
 
 from DeviceManager.DatabaseHandler import db
 from DeviceManager.DatabaseModels import handle_consistency_exception, assert_template_exists, assert_device_exists
@@ -122,10 +123,23 @@ class TemplateHandler():
             LOGGER.debug(f"... filter was added to query.")
 
         SORT_CRITERION = {
+            'id': DeviceTemplate.id,
+            'asc:id': DeviceTemplate.id,
+            'desc:id': desc(DeviceTemplate.id),
             'label': DeviceTemplate.label,
+            'asc:label': DeviceTemplate.label,
+            'desc:label': desc(DeviceTemplate.label),
+            'created': DeviceTemplate.created,
+            'asc:created': DeviceTemplate.created,
+            'desc:created': desc(DeviceTemplate.created),
+            'updated': DeviceTemplate.updated,
+            'asc:updated': DeviceTemplate.updated,
+            'desc:updated': desc(DeviceTemplate.updated),
             None: None
         }
+
         sortBy = SORT_CRITERION.get(params.get('sortBy'), None)
+        LOGGER.debug(f" Sorting templates by {sortBy}")
 
         LOGGER.debug(f"Sortby filter is {sortBy}")
         if parsed_query:
