@@ -19,7 +19,7 @@ importlib-metadata==3.4.0
 itsdangerous==0.24
 Jinja2==2.10
 kafka-python==1.4.1
-Mako==1.1.4
+Mako==1.2.2
 MarkupSafe==1.1.1
 marshmallow==3.0.0b8
 more-itertools==8.6.0
