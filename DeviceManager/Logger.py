@@ -7,8 +7,8 @@ from DeviceManager.utils import HTTPRequestError
 
 class Log:
 
-    def __init__(self, LOG_LEVEL = CONFIG.log_level, 
-        LOG_FORMAT = "[%(log_color)s%(asctime)-8s%(reset)s] |%(log_color)s%(module)-8s%(reset)s| %(log_color)s%(levelname)s%(reset)s: %(log_color)s%(message)s%(reset)s", DISABLED = False):
+    def __init__(self, LOG_LEVEL = CONFIG.log_level,
+        LOG_FORMAT = "%(log_color)s%(asctime)-8s%(reset)s | sid=%(log_color)s'device-manager'%(reset)s | level=%(log_color)s%(levelname)s%(reset)s | message=%(log_color)s%(message)s%(reset)s", DISABLED = False):
 
         #Disable all others modules logs
         LOGGING = {
@@ -33,7 +33,9 @@ class Log:
             self.log.handler_set = True
 
     def update_log_level(self, LEVEL):
-        levelToName = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
+        # levelToName = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
+
+        levelToName = ['ERROR', 'WARNING', 'INFO', 'DEBUG']
 
         try:
             self.log = logging.getLogger('device-manager.' + __name__)
