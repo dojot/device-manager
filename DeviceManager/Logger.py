@@ -33,8 +33,6 @@ class Log:
             self.log.handler_set = True
 
     def update_log_level(self, LEVEL):
-        # levelToName = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG']
-
         levelToName = ['ERROR', 'WARNING', 'INFO', 'DEBUG']
 
         try:
