@@ -41,7 +41,7 @@ DEV_MNGR_CRYPTO_PASS | Password of crypto              | none                | S
 DEV_MNGR_CRYPTO_SALT | Salt of crypto                  | none                | String
 KAFKA_HOST           | Kafka host                      | kafka               | Hostname
 KAFKA_PORT           | Kafka port                      | 9092                | Number
-LOG_LEVEL            | Logger level                    | INFO                | DEBUG, ERROR, WARNING, CRITICAL, INFO
+LOG_LEVEL            | Logger level                    | INFO                | DEBUG, ERROR, WARNING, INFO
 STATUS_TIMEOUT       | Kafka timeout                   | 5                   | Number
 
 ## How to run
