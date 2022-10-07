@@ -1,14 +1,14 @@
 import logging
 from logging import config as config_log
 from colorlog import ColoredFormatter
-
+from datetime import datetime, timezone
 from DeviceManager.conf import CONFIG
 from DeviceManager.utils import HTTPRequestError
 
 class Log:
 
     def __init__(self, LOG_LEVEL = CONFIG.log_level,
-        LOG_FORMAT = "%(log_color)s%(asctime)-8s%(reset)s | sid=%(log_color)s'device-manager'%(reset)s | level=%(log_color)s%(levelname)s%(reset)s | message=%(log_color)s%(message)s%(reset)s", DISABLED = False):
+        LOG_FORMAT = "%(log_color)s%(asctime)s%(reset)s | sid=%(log_color)sdevice-manager%(reset)s | level=%(log_color)s%(levelname)s%(reset)s | message=%(log_color)s%(message)s%(reset)s", DISABLED = False):
 
         #Disable all others modules logs
         LOGGING = {
@@ -16,7 +16,7 @@ class Log:
             'disable_existing_loggers': True,
         }
         
-        dateFormat = '%d/%m/%y - %H:%M:%S'
+        dateFormat =  datetime.now(timezone.utc).astimezone().isoformat("T","milliseconds")
         config_log.dictConfig(LOGGING)
         self.formatter = ColoredFormatter(LOG_FORMAT, dateFormat)
         self.log = logging.getLogger('device-manager.' + __name__)
