@@ -136,7 +136,7 @@ class TestImportHandler(unittest.TestCase):
         token = generate_token()
 
         data = """{"templates": [{"id": 1, "label": "template1", "attrs": [{"label": "temperature", "type": "dynamic", "value_type": "float"}]}], 
-        "devices": [{"id": "68fc", "label": "test_device_0"},{"id": "94dc","label": "test_device_1"}]}"""
+        "devices": [{"id": "68fc", "label": "test_device_0", "disabled": false},{"id": "94dc","label": "test_device_1", "disabled": false}]}"""
 
         with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
             result = ImportHandler.import_data(data, token, 'application/json')
@@ -144,7 +144,7 @@ class TestImportHandler(unittest.TestCase):
             self.assertEqual(result['message'], 'data imported!')
 
         data = """{"templates": {"id": 1, "label": "template1", "attrs": [{"label": "temperature", "type": "dynamic", "value_type": "float"}]}, 
-        "devices": [{"id": "68fc", "label": "test_device_0"},{"id": "94dc","label": "test_device_1"}]}"""
+        "devices": [{"id": "68fc", "label": "test_device_0", "disabled": false},{"id": "94dc","label": "test_device_1", "disabled": false}]}"""
 
         with self.assertRaises(HTTPRequestError):
             ImportHandler.import_data(data, token, 'application/json')

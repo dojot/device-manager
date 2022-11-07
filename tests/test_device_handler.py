@@ -265,7 +265,7 @@ class TestDeviceHandler(unittest.TestCase):
         db_mock_session.session = AlchemyMagicMock()
         token = generate_token()
 
-        data = '{"label":"test_device","templates":[1]}'
+        data = '{"label":"test_device","templates":[1],"disabled": false}'
 
         with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
             mock_device_id.return_value = 'test_device_id'
@@ -326,7 +326,7 @@ class TestDeviceHandler(unittest.TestCase):
                             db_mock.session.commit.side_effect = IntegrityError(statement='test', params='test', orig=orig)
 
                             token = generate_token()
-                            data = '{"label":"test_device","templates":[1]}'
+                            data = '{"label":"test_device","templates":[1],"disabled": false}'
                             params = {'count': '1', 'verbose': 'false',
                                 'content_type': 'application/json', 'data': data}
 
@@ -339,7 +339,7 @@ class TestDeviceHandler(unittest.TestCase):
         db_mock_session.session = AlchemyMagicMock()
         token = generate_token()
 
-        data = '{"label": "test_updated_device", "templates": [4865]}'
+        data = '{"label": "test_updated_device", "templates": [4865], "disabled": false}'
 
         with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
             params = {'content_type': 'application/json', 'data': data}
@@ -483,7 +483,7 @@ class TestDeviceHandler(unittest.TestCase):
         db_mock.session = AlchemyMagicMock()
         token = generate_token()
         
-        data = '{"label":"device001","templates":[1]}'
+        data = '{"label":"device001","templates":[1],"disabled": false}'
         with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
             mock_device_id.return_value = 'device001_id'
 
@@ -508,7 +508,7 @@ class TestDeviceHandler(unittest.TestCase):
     def test_filter_device_label_template(self, db_mock, query_property_getter_mock):
         db_mock.session = AlchemyMagicMock()
         token = generate_token()
-        data = '{"label":"device002","templates":[1]}'
+        data = '{"label":"device002","templates":[1],"disabled": false}'
 
         with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
             mock_device_id.return_value = 'device002_id'
