@@ -30,6 +30,8 @@ from DeviceManager.TenancyManager import init_tenant_context
 from DeviceManager.app import app
 from DeviceManager.Logger import Log
 
+from DeviceManager.SerializationModels import template_schema
+
 device = Blueprint('device', __name__)
 
 
@@ -401,6 +403,11 @@ class DeviceHandler(object):
         return serialize_full_device(orm_device, tenant, sensitive_data)
 
     @staticmethod
+    def device_id_is_valid(device_id):
+        regex = re.compile(r'^[0-9a-fA-F]{2,6}$')
+        return regex.match(device_id) != None
+
+    @staticmethod
     def validate_device_id(device_id):
         """
         Validates if the device id follows the rules implemented by dojot 
@@ -409,8 +416,7 @@ class DeviceHandler(object):
 
         :raises ValidationError: If the device id violated the rules or is too long
         """
-        regex = re.compile(r'^[0-9a-fA-F]{2,6}$')
-        if regex.match(device_id) == None:
+        if not DeviceHandler.device_id_is_valid(device_id):
             raise ValidationError('Device ID must be 2-6 characters and must be hexadecimal (0-9,a-f,A-F).')  
 
 
@@ -506,6 +512,135 @@ class DeviceHandler(object):
                 'devices': devices
             }
         return result
+
+
+    @classmethod
+    def publish_device_creation(cls, full_device_data, tenant):
+
+        # Updating handlers
+        kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
+        kafka_handler_instance.create(full_device_data, meta={"service": tenant})
+
+        return;
+
+    def insert_new_device_into_database(device_data, database):
+
+        device_label = device_data['label']
+        device_templates = device_data['templates']
+        
+        #if json_payload.get('id', None) is None:
+        if('id' in device_data):
+            device_id = device_data['id']
+            LOGGER.debug(f"DeviceId pré-configurado: {device_id}")
+            if(DeviceHandler.device_id_is_valid(device_id)):
+                LOGGER.debug(f"DeviceId '{device_id}'fora do padrão. Operação de inserção será abortada.")
+                raise Exception("invalid-deviceId");
+        else:
+            device_id = DeviceHandler.generate_device_id()
+
+        LOGGER.debug(f"ID que será atribuído ao novo dispositivo: {device_id}")
+
+        LOGGER.debug(f"Validando se label a ser atribuída ao dispositivo já existe...")
+        if(DeviceHandler.label_already_exists(device_label, db)):
+            LOGGER.debug(f"[device {device_label}] Ignorando device por ter label já existente")
+            raise Exception("label-already-in-use");
+
+
+        LOGGER.debug(f"Validando {len(device_templates)} templates associados...")
+
+        full_templates = []
+
+        if(len(device_templates) == 0):
+            LOGGER.debug(f"Operação de inserção sem template associado. É necessário informar ao menos 1. Abortando")
+            raise Exception("no-templates-assigned");
+        
+        template_attrs_map = {}
+        for template_id in device_templates:
+            LOGGER.debug(f"Verificando template de id {template_id}")
+            template_rows = db.session.query(DeviceTemplate) \
+                                .join(DeviceAttr, isouter=True) \
+                                .filter(DeviceTemplate.id == template_id)
+            
+            if(template_rows.count() == 0):
+                LOGGER.debug(f"Template {template_id} não existe")
+                raise Exception("template-id-does-not-exist");
+
+            template_data = template_rows.one()
+            for attr in template_schema.dump(template_data)['attrs']:
+                attr_label = attr['label']
+                LOGGER.debug(f"Marcando attr {attr_label} do template {template_id}")
+
+                if attr_label in template_attrs_map:
+                    LOGGER.debug(f"Atributo {attr_label} duplicado entre templates {template_id} e {template_attrs_map[attr_label]}")
+                    raise Exception("duplicated-attribute-across-templates")
+                else:
+                    LOGGER.debug(f"Adicionando atributo {attr_label} ao mapa")
+                    template_attrs_map[attr_label] = template_id
+            
+            LOGGER.debug(f"Adicionando template {template_id} ao mapa do dispositivo")
+            full_templates.append(template_data)
+           
+        LOGGER.debug(f"Validação de templates concluída. Associando listagem final ao device")
+        orm_device = Device(id=device_id, label=device_label, templates=full_templates)
+        database.session.add(orm_device)
+        LOGGER.debug(f"Entidade salva no banco para o deviceId {device_id}")
+        return orm_device;
+
+    def label_already_exists(label, database):
+        
+        LOGGER.debug(f"Verificando se o label {label} já está atribuído a algum device")
+        #session.query(session.query(User).filter(User.id == 1).exists()).scalar()
+        already_exists = database.session.query(database.session.query(Device).filter(Device.label == label).exists()).scalar()
+        LOGGER.debug(f"Label '{label}' {'JÁ' if already_exists else 'NÃO'} está em uso")
+        return already_exists
+        
+
+    @classmethod
+    def create_devices_in_batch(cls, devices_preffix, quantity, initial_suffix_number, templates, tenant):
+
+        LOGGER.info(f"Inicializando criação de {quantity} devices com prefixo {devices_preffix} em lote para o tenant {tenant}")
+
+        devices_created = []
+        devices_failed = []
+
+        for counter in range(initial_suffix_number, (initial_suffix_number + quantity)):
+            device_label = f"{devices_preffix}-{counter}"
+            LOGGER.info(f"Criando device {device_label}")
+
+            LOGGER.debug(f"[device {device_label}] Iniciando tratamento deste device")
+
+            try:
+                orm_device = DeviceHandler.insert_new_device_into_database({
+                    'label': device_label,
+                    'templates': templates
+                }, db)
+                full_device_data = serialize_full_device(orm_device, tenant)
+                devices_created.append(full_device_data)
+            except Exception as e:
+                LOGGER.debug(f"[device {device_label}] Ignorando device: {e}")
+                devices_failed.append({
+                    'label': device_label,
+                    'reason': repr(e)
+                })
+
+        db.session.commit()
+        LOGGER.debug(f"Inserções em lote finalizadas")
+        LOGGER.debug(f"{len(devices_created)} sucessos / {len(devices_failed)} falhas")
+
+        if(len(devices_created) > 0):
+            LOGGER.debug(f"Notificando criações no kafka")
+
+            for full_device_data in devices_created:
+                device_id = full_device_data['id']
+                device_label = full_device_data['label']
+
+                LOGGER.debug(f"Notificando device {device_label} (id {device_id})")
+                DeviceHandler.publish_device_creation(full_device_data, tenant)
+
+        return {
+            'successes': devices_created,
+            'failures': devices_failed
+        }
 
     @classmethod
     def delete_device(cls, device_id, token):
@@ -986,6 +1121,39 @@ def flask_get_devices():
         result = DeviceHandler.get_devices(token, params)
         LOGGER.info(f' Getting latest added device(s).')
 
+        return make_response(jsonify(result), 200)
+    except HTTPRequestError as e:
+        LOGGER.error(f' {e.message} - {e.error_code}.')
+        if isinstance(e.message, dict):
+            return make_response(jsonify(e.message), e.error_code)
+
+        return format_response(e.error_code, e.message)
+
+
+@device.route('/device/batch', methods=['POST'])
+def flask_create_devices_in_batch():
+    """
+    Creates and configures the given device (in json).
+
+    Check API description for more information about request parameters and
+    headers.
+    """
+    LOGGER.info(f"Requisição recebida de criação de dispositivos em lote")
+    try:
+        # retrieve the authorization token
+        token = retrieve_auth_token(request)
+
+        tenant = init_tenant_context(token, db)
+    
+        request_body = request.get_json()
+        devices_prefix = request_body.get('devicesPrefix', '')
+        quantity = request_body.get('quantity', 1)
+        initial_suffix_number = request_body.get('initialSuffixNumber', 1)
+        templates = request_body.get('templates', [])
+
+        LOGGER.debug(f"Criando {quantity} dispositivos. Prefixo '{devices_prefix}' com sufixo iniciando de {initial_suffix_number}")
+
+        result = DeviceHandler.create_devices_in_batch(devices_prefix, quantity, initial_suffix_number, templates, tenant)
         return make_response(jsonify(result), 200)
     except HTTPRequestError as e:
         LOGGER.error(f' {e.message} - {e.error_code}.')
