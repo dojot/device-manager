@@ -532,9 +532,11 @@ class DeviceHandler(object):
         if('id' in device_data):
             device_id = device_data['id']
             LOGGER.debug(f"DeviceId pré-configurado: {device_id}")
-            if(DeviceHandler.device_id_is_valid(device_id)):
-                LOGGER.debug(f"DeviceId '{device_id}'fora do padrão. Operação de inserção será abortada.")
+            if(not DeviceHandler.device_id_is_valid(device_id)):
+                LOGGER.debug(f"DeviceId '{device_id}' fora do padrão. Operação de inserção será abortada.")
                 raise Exception("invalid-deviceId");
+            else:
+                LOGGER.debug(f"DeviceId '{device_id}' informado está no padrão esperado.")
         else:
             device_id = DeviceHandler.generate_device_id()
 
