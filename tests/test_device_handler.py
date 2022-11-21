@@ -305,6 +305,32 @@ class TestDeviceHandler(unittest.TestCase):
 
                     with self.assertRaises(HTTPRequestError):
                         result = DeviceHandler.create_device(params, token)
+    
+    @patch('DeviceManager.DeviceHandler.db')
+    @patch('flask_sqlalchemy._QueryProperty.__get__')
+    def test_create_disabled_device(self, db_mock_session, query_property_getter_mock):
+        db_mock_session.session = AlchemyMagicMock()
+        token = generate_token()
+
+        data = '{"label":"test_device","templates":[1],"disabled": true}'
+
+        with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
+            mock_device_id.return_value = 'test_device_id'
+
+            with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
+                mock_validate_device_id.return_value = True
+
+                with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
+
+                    params = {'count': '1', 'verbose': 'false',
+                            'content_type': 'application/json', 'data': data}
+                    result = DeviceHandler.create_device(params, token)
+
+                    self.assertIsNotNone(result)
+                    self.assertTrue(result['devices'])
+                    self.assertEqual(result['message'], 'devices created')
+                    self.assertEqual(result['devices'][0]['id'], 'test_device_id')
+                    self.assertEqual(result['devices'][0]['label'], 'test_device')
 
     @patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_create_device_integrity_errors(self, query_get_mock):
