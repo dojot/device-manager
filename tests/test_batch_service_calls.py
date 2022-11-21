@@ -1,36 +1,29 @@
 import pytest
-import json
 import unittest
 from unittest.mock import Mock, MagicMock, patch, call
-from flask import Flask
-from sqlalchemy.exc import IntegrityError
 
-from DeviceManager.DeviceHandler import DeviceHandler, flask_delete_all_device, flask_get_device, flask_remove_device, flask_add_template_to_device, flask_remove_template_from_device, flask_gen_psk,flask_internal_get_device, create_devices_in_batch_service
-from DeviceManager.utils import HTTPRequestError
-from DeviceManager.DatabaseModels import Device, DeviceAttrsPsk, DeviceAttr
-from DeviceManager.DatabaseModels import assert_device_exists
-from DeviceManager.BackendHandler import KafkaInstanceHandler
-import DeviceManager.DatabaseModels
-from DeviceManager.SerializationModels import ValidationError
-from DeviceManager.ImportHandler import ImportHandler
-from .token_test_generator import generate_token
+from DeviceManager.DeviceHandler import create_devices_in_batch_service
+from DeviceManager.DeviceHandler import ValidationException, BusinessException
 
-from .test_utils import Request
-
-from alchemy_mock.mocking import AlchemyMagicMock, UnifiedAlchemyMagicMock
 
 from DeviceManager.Logger import Log
 LOGGER = Log().color_log()
 
-app = Flask(__name__)
+from DeviceManager.app import app
 
 class TestServiceCallsHandler(unittest.TestCase):
 
+    @staticmethod
+    def create_mock_request(json_body):
+        request = MagicMock()
+        request.get_json.return_value = json_body
+        return request
 
     @patch('DeviceManager.DeviceHandler.init_tenant_context')
     @patch('DeviceManager.DeviceHandler.retrieve_auth_token')
-    @patch('DeviceManager.DeviceHandler.create_devices_in_batch_service')
-    def test_method_calls_for_create_devices_in_batch(self, mock_create_devices_in_batch, mock_retrieve_auth_token, mock_init_tenant_context):
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.create_devices_in_batch')
+    @patch('DeviceManager.DeviceHandler.db')
+    def test_method_calls_for_create_devices_in_batch_service(self, mock_database, mock_create_devices_in_batch, mock_retrieve_auth_token, mock_init_tenant_context):
 
         mock_retrieve_auth_token.return_value = "a-token"
 
@@ -40,25 +33,51 @@ class TestServiceCallsHandler(unittest.TestCase):
         suffix = 123
         templates = [ 9 ]
 
-        response_sample = { 'it': "works" }
+        response_sample = { "it": "works" }
 
         mock_init_tenant_context.return_value = tenant
         mock_create_devices_in_batch.return_value = response_sample
 
-        json_body = {
-            'devicesPrefix': prefix,
-            'quantity': quantity,
-            'initialSuffixNumber': suffix,
-            'templates': templates
-        }
+        LOGGER.info("Checking if batch-creation controller call maps to the correct underlying method")
+        with app.app_context():
+            response = create_devices_in_batch_service(self.create_mock_request({
+                'devicesPrefix': prefix,
+                'quantity': quantity,
+                'initialSuffixNumber': suffix,
+                'templates': templates
+            }))
+            LOGGER.info(f"Got response {response}")
+            mock_create_devices_in_batch.assert_called_once_with(prefix, quantity, suffix, templates, tenant, mock_database)
 
-        request = MagicMock()
-        request.get_json.return_value = json_body
+            self.assertNotEqual(response.status_code, "200")
+            self.assertEqual(response.status_code, 200)
+
+
+    @patch('DeviceManager.DeviceHandler.init_tenant_context')
+    @patch('DeviceManager.DeviceHandler.retrieve_auth_token')
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.create_devices_in_batch')
+    @patch('DeviceManager.DeviceHandler.db')
+    def test_exceptions_for_create_devices_in_batch_service(self, mock_database, mock_create_devices_in_batch, mock_retrieve_auth_token, mock_init_tenant_context):
+
+        tenant = "a-tenant"
+        mock_init_tenant_context.return_value = tenant
+        mock_retrieve_auth_token.return_value = "a-token"
 
         LOGGER.info("Checking if batch-creation controller call maps to the correct underlying method")
-        response = mock_create_devices_in_batch(request)
-        
-        
+        with app.app_context():
+            a_message = "any-message"
 
+            mock_create_devices_in_batch.side_effect = ValidationException("any-validation-error-message");
+            # with self.assertRaises(ValidationException) as context:
+            response = create_devices_in_batch_service(self.create_mock_request({}))
+            self.assertEqual(response.status_code, 400)
 
-        # DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, templates, "tenant-id", mock_database)
+            mock_create_devices_in_batch.side_effect = BusinessException("any-business-error-message");
+            # with self.assertRaises(ValidationException) as context:
+            response = create_devices_in_batch_service(self.create_mock_request({}))
+            self.assertEqual(response.status_code, 422)
+
+            mock_create_devices_in_batch.side_effect = Exception("any-major-exception-message");
+            # with self.assertRaises(ValidationException) as context:
+            response = create_devices_in_batch_service(self.create_mock_request({}))
+            self.assertEqual(response.status_code, 500)
