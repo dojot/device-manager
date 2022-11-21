@@ -1,19 +1,9 @@
 import pytest
-import json
 import unittest
 from unittest.mock import Mock, MagicMock, patch, call
-from flask import Flask
-from sqlalchemy.exc import IntegrityError
 
-from DeviceManager.DeviceHandler import DeviceHandler, flask_delete_all_device, flask_get_device, flask_remove_device, flask_add_template_to_device, flask_remove_template_from_device, flask_gen_psk,flask_internal_get_device
-from DeviceManager.utils import HTTPRequestError
-from DeviceManager.DatabaseModels import Device, DeviceAttrsPsk, DeviceAttr
-from DeviceManager.DatabaseModels import assert_device_exists
-from DeviceManager.BackendHandler import KafkaInstanceHandler
-import DeviceManager.DatabaseModels
-from DeviceManager.SerializationModels import ValidationError
-from DeviceManager.ImportHandler import ImportHandler
-from .token_test_generator import generate_token
+from DeviceManager.DeviceHandler import DeviceHandler
+from DeviceManager.DeviceHandler import ValidationException, BusinessException
 
 from alchemy_mock.mocking import AlchemyMagicMock, UnifiedAlchemyMagicMock
 
@@ -21,8 +11,6 @@ from DeviceManager.Logger import Log
 LOGGER = Log().color_log()
 
 class TestDeviceCreationHandler(unittest.TestCase):
-
-    app = Flask(__name__)
 
     @patch('DeviceManager.DeviceHandler.db')
     def test_device_insertion_with_invalid_device_id(self, mock_database):
@@ -33,7 +21,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
             "templates": [ 1 ]
         }
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(BusinessException) as context:
             DeviceHandler.insert_new_device_into_database(device_data, None)
 
         self.assertEqual(str(context.exception), 'invalid-deviceId')
@@ -69,7 +57,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
             "templates": [ ]
         }
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(BusinessException) as context:
             DeviceHandler.insert_new_device_into_database(device_data, mock_database)
 
         self.assertEqual(str(context.exception), 'label-already-in-use')
@@ -87,7 +75,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
             "templates": [ ]
         }
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(BusinessException) as context:
             DeviceHandler.insert_new_device_into_database(device_data, mock_database)
 
         self.assertEqual(str(context.exception), 'no-templates-assigned')
@@ -101,59 +89,59 @@ class TestDeviceCreationHandler(unittest.TestCase):
 
         LOGGER.info("Checking if invalid batch-preffix is correctly handled")
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch(None, 0, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-preffix')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch(1, 0, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-preffix')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("", 0, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-preffix')
 
 
         LOGGER.info("Checking if invalid batch-quantity is correctly handled")
         
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", None, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 0, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", -1, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
 
 
         LOGGER.info("Checking if invalid batch-suffix is correctly handled")
         
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, None, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, "50", [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, -1, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
 
 
         LOGGER.info("Checking if invalid template is correctly handled")
         
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, None, "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-templates')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-templates')
 
 
         LOGGER.info("Checking if invalid tenant is correctly handled")
         
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], None, mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-tenant')
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], "", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-tenant')
 

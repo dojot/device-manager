@@ -37,6 +37,13 @@ device = Blueprint('device', __name__)
 
 LOGGER = Log().color_log()
 
+
+class ValidationException(Exception):
+    pass
+
+class BusinessException(Exception):
+    pass
+
 def fill_overridden_flag(attrs):
     # Update all static attributes with "is_static_overridden" attribute
     for templateId in attrs:
@@ -529,7 +536,6 @@ class DeviceHandler(object):
 
         return;
 
-
     @classmethod
     def insert_new_device_into_database(cls, device_data, database):
 
@@ -541,7 +547,7 @@ class DeviceHandler(object):
             LOGGER.debug(f"DeviceId is preset as: {device_id}")
             if(not DeviceHandler.is_device_id_valid(device_id)):
                 LOGGER.debug(f"Preset deviceId '{device_id}' invalid pattern. Aborting...")
-                raise Exception("invalid-deviceId");
+                raise BusinessException("invalid-deviceId");
             else:
                 LOGGER.debug(f"Preset deviceId '{device_id}' follows the expected pattern.")
         else:
@@ -552,7 +558,7 @@ class DeviceHandler(object):
         LOGGER.debug(f"Checking if the label {device_label} can be assigned to it...")
         if(DeviceHandler.label_already_exists(device_label, db)):
             LOGGER.info(f"[device {device_id}] Label {device_label} already in use")
-            raise Exception("label-already-in-use");
+            raise BusinessException("label-already-in-use");
 
         LOGGER.debug(f"Checking {len(device_templates)} associated templates ...")
 
@@ -560,7 +566,7 @@ class DeviceHandler(object):
 
         if(len(device_templates) == 0):
             LOGGER.info(f"[device {device_label} ({device_id})] No template IDs were informed. Aborting...")
-            raise Exception("no-templates-assigned");
+            raise BusinessException("no-templates-assigned");
 
         template_attrs_map = {}
         for template_id in device_templates:
@@ -569,7 +575,7 @@ class DeviceHandler(object):
             
             if(template_rows.count() == 0):
                 LOGGER.debug(f"No template found for templateId {template_id}")
-                raise Exception("template-id-does-not-exist");
+                raise BusinessException("template-id-does-not-exist");
 
             template_data = template_rows.one()
             for attr in template_schema.dump(template_data)['attrs']:
@@ -578,7 +584,7 @@ class DeviceHandler(object):
 
                 if attr_label in template_attrs_map:
                     LOGGER.info(f"Attribute named {attr_label} is duplicated between templates {template_id} and {template_attrs_map[attr_label]}")
-                    raise Exception("duplicated-attribute-across-templates")
+                    raise BusinessException("duplicated-attribute-across-templates")
                 else:
                     LOGGER.debug(f"Flagging attribute named {attr_label} as seen on the map")
                     template_attrs_map[attr_label] = template_id
@@ -606,19 +612,19 @@ class DeviceHandler(object):
         LOGGER.debug("Guardchecking parameters")
 
         if((not isinstance(devices_prefix, str)) or len(devices_prefix) == 0 ):
-            raise Exception('invalid-batch-preffix')
+            raise ValidationException('invalid-batch-preffix')
 
         if((not isinstance(quantity, int)) or quantity <= 0 ):
-            raise Exception('invalid-batch-quantity')
+            raise ValidationException('invalid-batch-quantity')
 
         if((not isinstance(initial_suffix_number, int)) or initial_suffix_number < 0 ):
-            raise Exception('invalid-batch-suffix')
+            raise ValidationException('invalid-batch-suffix')
 
         if((not isinstance(templates, list)) or len(templates) == 0 ):
-            raise Exception('invalid-batch-templates')
+            raise ValidationException('invalid-batch-templates')
 
         if((not isinstance(tenant, str)) or len(tenant) == 0 ):
-            raise Exception('invalid-batch-tenant')
+            raise ValidationException('invalid-batch-tenant')
 
         LOGGER.info(f"Starting the creation of {quantity} devices prefixed with '{devices_prefix}' for tenant {tenant}")
 
@@ -1180,13 +1186,18 @@ def create_devices_in_batch_service(request):
         LOGGER.debug(f"Creating {quantity} devices. Prefix: '{devices_prefix}' with suffix counter starting at {initial_suffix_number}")
 
         result = DeviceHandler.create_devices_in_batch(devices_prefix, quantity, initial_suffix_number, templates, tenant, db)
-        return make_response(jsonify(result), 200)
-    except HTTPRequestError as e:
-        LOGGER.error(f' {e.message} - {e.error_code}.')
-        if isinstance(e.message, dict):
-            return make_response(jsonify(e.message), e.error_code)
+        LOGGER.debug(f"Got creation result: {result}")
 
-        return format_response(e.error_code, e.message)
+        return make_response(jsonify(result), 200)
+    except ValidationException as e:
+        LOGGER.warning(str(e))
+        return format_response(400, str(e))
+    except BusinessException as e:
+        LOGGER.warning(str(e))
+        return format_response(422, str(e))
+    except Exception as e:
+        LOGGER.error(str(e))
+        return format_response(500, str(e))
 
 
 @device.route('/device', methods=['POST'])
