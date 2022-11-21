@@ -171,10 +171,10 @@ class TestDeviceCreationHandler(unittest.TestCase):
         mock_database.session.commit.assert_called_once()
 
         LOGGER.info("Checking if the event publish call has been made")
-        mock_publish_device_creation
         mock_publish_device_creation.assert_called_once()
 
 
+    @staticmethod
     def mocked_insertion(device_data, database):
         device_label = device_data['label']
         LOGGER.info(f"Starting a mocked insertion for device labelled {device_label}")

@@ -65,19 +65,17 @@ class TestServiceCallsHandler(unittest.TestCase):
 
         LOGGER.info("Checking if batch-creation controller call maps to the correct underlying method")
         with app.app_context():
-            a_message = "any-message"
-
-            mock_create_devices_in_batch.side_effect = ValidationException("any-validation-error-message");
+            mock_create_devices_in_batch.side_effect = ValidationException("any-validation-error-message")
             # with self.assertRaises(ValidationException) as context:
             response = create_devices_in_batch_service(self.create_mock_request({}))
             self.assertEqual(response.status_code, 400)
 
-            mock_create_devices_in_batch.side_effect = BusinessException("any-business-error-message");
+            mock_create_devices_in_batch.side_effect = BusinessException("any-business-error-message")
             # with self.assertRaises(ValidationException) as context:
             response = create_devices_in_batch_service(self.create_mock_request({}))
             self.assertEqual(response.status_code, 422)
 
-            mock_create_devices_in_batch.side_effect = Exception("any-major-exception-message");
+            mock_create_devices_in_batch.side_effect = Exception("any-major-exception-message")
             # with self.assertRaises(ValidationException) as context:
             response = create_devices_in_batch_service(self.create_mock_request({}))
             self.assertEqual(response.status_code, 500)

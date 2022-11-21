@@ -520,6 +520,7 @@ class DeviceHandler(object):
             }
         return result
 
+    @staticmethod
     def get_template_by_id(template_id, database):
         return database.session.query(DeviceTemplate) \
                                 .join(DeviceAttr, isouter=True) \
@@ -534,8 +535,6 @@ class DeviceHandler(object):
         kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
         kafka_handler_instance.create(full_device_data, meta={"service": tenant})
 
-        return;
-
     @classmethod
     def insert_new_device_into_database(cls, device_data, database):
 
@@ -547,7 +546,7 @@ class DeviceHandler(object):
             LOGGER.debug(f"DeviceId is preset as: {device_id}")
             if(not DeviceHandler.is_device_id_valid(device_id)):
                 LOGGER.debug(f"Preset deviceId '{device_id}' invalid pattern. Aborting...")
-                raise BusinessException("invalid-deviceId");
+                raise BusinessException("invalid-deviceId")
             else:
                 LOGGER.debug(f"Preset deviceId '{device_id}' follows the expected pattern.")
         else:
@@ -558,7 +557,7 @@ class DeviceHandler(object):
         LOGGER.debug(f"Checking if the label {device_label} can be assigned to it...")
         if(DeviceHandler.label_already_exists(device_label, db)):
             LOGGER.info(f"[device {device_id}] Label {device_label} already in use")
-            raise BusinessException("label-already-in-use");
+            raise BusinessException("label-already-in-use")
 
         LOGGER.debug(f"Checking {len(device_templates)} associated templates ...")
 
@@ -566,7 +565,7 @@ class DeviceHandler(object):
 
         if(len(device_templates) == 0):
             LOGGER.info(f"[device {device_label} ({device_id})] No template IDs were informed. Aborting...")
-            raise BusinessException("no-templates-assigned");
+            raise BusinessException("no-templates-assigned")
 
         template_attrs_map = {}
         for template_id in device_templates:
@@ -575,7 +574,7 @@ class DeviceHandler(object):
             
             if(template_rows.count() == 0):
                 LOGGER.debug(f"No template found for templateId {template_id}")
-                raise BusinessException("template-id-does-not-exist");
+                raise BusinessException("template-id-does-not-exist")
 
             template_data = template_rows.one()
             for attr in template_schema.dump(template_data)['attrs']:
@@ -596,9 +595,10 @@ class DeviceHandler(object):
         orm_device = Device(id=device_id, label=device_label, templates=full_templates)
         database.session.add(orm_device)
         LOGGER.debug(f"Saved deviceId {device_id} entity into the database")
-        return orm_device;
+        return orm_device
 
 
+    @staticmethod
     def label_already_exists(label, database):
         
         LOGGER.debug(f"Checking if label {label} is already in use by a device")
@@ -607,6 +607,7 @@ class DeviceHandler(object):
         return already_exists
 
 
+    @staticmethod
     def create_devices_in_batch(devices_prefix, quantity, initial_suffix_number, templates, tenant, database):
 
         LOGGER.debug("Guardchecking parameters")
