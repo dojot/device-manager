@@ -153,6 +153,56 @@ class TestDeviceCreationHandler(unittest.TestCase):
         mock_publish_device_creation.assert_not_called()
 
 
+    def test_template_attribute_duplication_when_loading(self):
+
+        mock_return_first_value = MagicMock();
+        mock_return_first_value.count = lambda : 1
+        mock_return_first_value.one = lambda : {
+                                        "attrs": [
+                                            { "label":"one" }
+                                        ]
+                                    }
+
+        mock_return_second_value = MagicMock();
+        mock_return_second_value.count = lambda : 1
+        mock_return_second_value.one = lambda : {
+                                        "attrs": [
+                                            { "label": "two"}
+                                        ]
+                                    }
+
+        mock_return_third_value = MagicMock();
+        mock_return_third_value.count = lambda : 0
+        mock_return_third_value.one = lambda : {}
+
+        def mock_get_template_by_id(template_id, database):
+            if(template_id == 1):
+                return mock_return_first_value
+            elif(template_id == 2):
+                return mock_return_second_value
+            else:
+                return mock_return_third_value
+
+
+        LOGGER.info("Checking if an empty template_ids list raises an exception")
+        with self.assertRaises(BusinessException) as context:
+            DeviceHandler.load_template_models_from_database([ ], mock_get_template_by_id)
+        self.assertEqual(str(context.exception), 'no-templates-assigned')
+
+        LOGGER.info("Checking if two unique-set attrs will NOT raise an exception")
+        DeviceHandler.load_template_models_from_database([ 1, 2 ], mock_get_template_by_id)
+
+        LOGGER.info("Checking if duplicated template_ids raises an exception")
+        with self.assertRaises(BusinessException) as context:
+            DeviceHandler.load_template_models_from_database([ 1, 1 ], mock_get_template_by_id)
+        self.assertEqual(str(context.exception), 'duplicated-attribute-across-templates')
+
+        LOGGER.info("Checking if a template_id with no matches will raise the corresponding exception")
+        with self.assertRaises(BusinessException) as context:
+            DeviceHandler.load_template_models_from_database([ 3 ], mock_get_template_by_id)
+        self.assertEqual(str(context.exception), 'template-id-does-not-exist')
+
+
     @patch('DeviceManager.DeviceHandler.DeviceHandler.publish_device_creation')
     @patch('DeviceManager.DeviceHandler.DeviceHandler.insert_new_device_into_database')
     @patch('DeviceManager.DeviceHandler.db')

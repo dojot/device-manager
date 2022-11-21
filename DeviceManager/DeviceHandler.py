@@ -520,6 +520,7 @@ class DeviceHandler(object):
             }
         return result
 
+
     @staticmethod
     def get_template_by_id(template_id, database):
         return database.session.query(DeviceTemplate) \
@@ -535,16 +536,39 @@ class DeviceHandler(object):
         kafka_handler_instance = cls.kafka.getInstance(cls.kafka.kafkaNotifier)
         kafka_handler_instance.create(full_device_data, meta={"service": tenant})
 
+
     @classmethod
     def insert_new_device_into_database(cls, device_data, database):
 
         device_label = device_data['label']
         device_templates = device_data['templates']
-        
+
+        LOGGER.debug("Getting a deviceId for this new device")
+        device_id = DeviceHandler.parse_or_create_device_id(device_data, DeviceHandler.is_device_id_valid)
+
+        LOGGER.debug(f"Checking if the label {device_label} can be assigned to it...")
+        if(DeviceHandler.label_already_exists(device_label, db)):
+            LOGGER.info(f"[device {device_id}] Label {device_label} already in use")
+            raise BusinessException("label-already-in-use")
+
+        LOGGER.debug(f"Serializing {len(device_templates)} associated templates ...")
+        full_templates = DeviceHandler.load_template_models_from_database(device_templates, DeviceHandler.get_template_by_id)
+
+        orm_device = Device(id=device_id, label=device_label, templates=full_templates)
+
+        database.session.add(orm_device)
+        LOGGER.debug(f"Saved deviceId {device_id} entity into the database")
+        return orm_device
+
+
+    @staticmethod
+    def parse_or_create_device_id(device_data, is_device_id_valid):
+
         if('id' in device_data):
+            LOGGER.debug("The payload already has an 'id' property")
             device_id = device_data['id']
             LOGGER.debug(f"DeviceId is preset as: {device_id}")
-            if(not DeviceHandler.is_device_id_valid(device_id)):
+            if(not is_device_id_valid(device_id)):
                 LOGGER.debug(f"Preset deviceId '{device_id}' invalid pattern. Aborting...")
                 raise BusinessException("invalid-deviceId")
             else:
@@ -553,31 +577,33 @@ class DeviceHandler(object):
             device_id = DeviceHandler.generate_device_id()
 
         LOGGER.debug(f"New device will be ID'ed as: {device_id}")
+        return device_id
 
-        LOGGER.debug(f"Checking if the label {device_label} can be assigned to it...")
-        if(DeviceHandler.label_already_exists(device_label, db)):
-            LOGGER.info(f"[device {device_id}] Label {device_label} already in use")
-            raise BusinessException("label-already-in-use")
 
-        LOGGER.debug(f"Checking {len(device_templates)} associated templates ...")
+    @staticmethod
+    def load_template_models_from_database(template_ids_list, get_template_by_id):
 
         full_templates = []
 
-        if(len(device_templates) == 0):
-            LOGGER.info(f"[device {device_label} ({device_id})] No template IDs were informed. Aborting...")
+        if(len(template_ids_list) == 0):
+            LOGGER.info(f"No template IDs were informed. Aborting...")
             raise BusinessException("no-templates-assigned")
 
         template_attrs_map = {}
-        for template_id in device_templates:
+        for template_id in template_ids_list:
             LOGGER.debug(f"Checking template for templateId {template_id}")
-            template_rows = DeviceHandler.get_template_by_id(template_id, db)
-            
+            template_rows = get_template_by_id(template_id, db)
+
             if(template_rows.count() == 0):
                 LOGGER.debug(f"No template found for templateId {template_id}")
                 raise BusinessException("template-id-does-not-exist")
 
             template_data = template_rows.one()
-            for attr in template_schema.dump(template_data)['attrs']:
+            LOGGER.debug(f"Got template data: {template_data}")
+            template_attrs = template_schema.dump(template_data)['attrs']
+            LOGGER.debug(f"Parsing through {len(template_attrs)} attrs from template")
+            for attr in template_attrs:
+                LOGGER.debug(f"Checking attr {attr}")
                 attr_label = attr['label']
                 LOGGER.debug(f"Checking attr {attr_label} from templateId {template_id}")
 
@@ -590,12 +616,9 @@ class DeviceHandler(object):
             
             LOGGER.debug(f"Appending templateId {template_id} into the device")
             full_templates.append(template_data)
-           
-        LOGGER.debug(f"Template validation complete. Associating {len(full_templates)} templates with device {device_label} ({device_id})")
-        orm_device = Device(id=device_id, label=device_label, templates=full_templates)
-        database.session.add(orm_device)
-        LOGGER.debug(f"Saved deviceId {device_id} entity into the database")
-        return orm_device
+
+        LOGGER.debug(f"Template serialization complete. Returning {len(full_templates)}")
+        return full_templates
 
 
     @staticmethod
@@ -608,24 +631,30 @@ class DeviceHandler(object):
 
 
     @staticmethod
-    def create_devices_in_batch(devices_prefix, quantity, initial_suffix_number, templates, tenant, database):
+    def validate_create_devices_in_batch_parameters(devices_prefix, quantity, initial_suffix_number, templates, tenant):
 
         LOGGER.debug("Guardchecking parameters")
 
-        if((not isinstance(devices_prefix, str)) or len(devices_prefix) == 0 ):
+        if((not isinstance(devices_prefix, str)) or len(devices_prefix) == 0):
             raise ValidationException('invalid-batch-prefix')
 
-        if((not isinstance(quantity, int)) or quantity <= 0 ):
+        if((not isinstance(quantity, int)) or quantity <= 0 or quantity > 999):
             raise ValidationException('invalid-batch-quantity')
 
-        if((not isinstance(initial_suffix_number, int)) or initial_suffix_number < 0 ):
+        if((not isinstance(initial_suffix_number, int)) or initial_suffix_number < 0):
             raise ValidationException('invalid-batch-suffix')
 
-        if((not isinstance(templates, list)) or len(templates) == 0 ):
+        if((not isinstance(templates, list)) or len(templates) == 0):
             raise ValidationException('invalid-batch-templates')
 
-        if((not isinstance(tenant, str)) or len(tenant) == 0 ):
+        if((not isinstance(tenant, str)) or len(tenant) == 0):
             raise ValidationException('invalid-batch-tenant')
+
+
+    @staticmethod
+    def create_devices_in_batch(devices_prefix, quantity, initial_suffix_number, templates, tenant, database):
+
+        DeviceHandler.validate_create_devices_in_batch_parameters(devices_prefix, quantity, initial_suffix_number, templates, tenant)
 
         LOGGER.info(f"Starting the creation of {quantity} devices prefixed with '{devices_prefix}' for tenant {tenant}")
 
