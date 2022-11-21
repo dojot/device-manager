@@ -612,7 +612,7 @@ class DeviceHandler(object):
         LOGGER.debug("Guardchecking parameters")
 
         if((not isinstance(devices_prefix, str)) or len(devices_prefix) == 0 ):
-            raise ValidationException('invalid-batch-preffix')
+            raise ValidationException('invalid-batch-prefix')
 
         if((not isinstance(quantity, int)) or quantity <= 0 ):
             raise ValidationException('invalid-batch-quantity')
@@ -636,6 +636,7 @@ class DeviceHandler(object):
             LOGGER.info(f"Creating device named {device_label}")
 
             try:
+                LOGGER.debug(f"Calling {DeviceHandler.insert_new_device_into_database}")
                 orm_device = DeviceHandler.insert_new_device_into_database({
                     'label': device_label,
                     'templates': templates
@@ -643,7 +644,7 @@ class DeviceHandler(object):
                 LOGGER.info(f"Serializing device data for insertion")
                 full_device_data = serialize_full_device(orm_device, tenant)
                 devices_created.append(full_device_data)
-            except Exception as e:
+            except BusinessException as e:
                 LOGGER.debug(f"[device {device_label}] Failed to create device: {e}")
                 devices_failed.append({
                     'label': device_label,
@@ -665,6 +666,7 @@ class DeviceHandler(object):
                 DeviceHandler.publish_device_creation(full_device_data, tenant)
 
         return {
+            'devicesWithError': len(devices_failed) > 0,
             'successes': devices_created,
             'failures': devices_failed
         }

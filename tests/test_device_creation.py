@@ -5,6 +5,9 @@ from unittest.mock import Mock, MagicMock, patch, call
 from DeviceManager.DeviceHandler import DeviceHandler
 from DeviceManager.DeviceHandler import ValidationException, BusinessException
 
+from DeviceManager.SerializationModels import DeviceSchema
+from DeviceManager.DatabaseModels import Device as DatabaseDevice
+
 from alchemy_mock.mocking import AlchemyMagicMock, UnifiedAlchemyMagicMock
 
 from DeviceManager.Logger import Log
@@ -87,62 +90,62 @@ class TestDeviceCreationHandler(unittest.TestCase):
     def test_signature_safeguards_for_create_devices_in_batch(self, mock_database, mock_insert_new_device_into_database, mock_publish_device_creation):
         mock_database.session = AlchemyMagicMock()
 
-        LOGGER.info("Checking if invalid batch-preffix is correctly handled")
+        LOGGER.info("Checking if invalid batch-prefix is correctly handled")
 
         with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch(None, 0, 10, [], "tenant-id", mock_database)
-        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+        self.assertEqual(str(context.exception), 'invalid-batch-prefix')
         with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch(1, 0, 10, [], "tenant-id", mock_database)
-        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+        self.assertEqual(str(context.exception), 'invalid-batch-prefix')
         with self.assertRaises(ValidationException) as context:
             DeviceHandler.create_devices_in_batch("", 0, 10, [], "tenant-id", mock_database)
-        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+        self.assertEqual(str(context.exception), 'invalid-batch-prefix')
 
 
         LOGGER.info("Checking if invalid batch-quantity is correctly handled")
         
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", None, 10, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", None, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 0, 10, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 0, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", -1, 10, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", -1, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-quantity')
 
 
         LOGGER.info("Checking if invalid batch-suffix is correctly handled")
         
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, None, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, None, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, "50", [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, "50", [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, -1, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, -1, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-suffix')
 
 
         LOGGER.info("Checking if invalid template is correctly handled")
         
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, None, "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, None, "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-templates')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [], "tenant-id", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, [], "tenant-id", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-templates')
 
 
         LOGGER.info("Checking if invalid tenant is correctly handled")
         
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], None, mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, [ 1 ], None, mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-tenant')
         with self.assertRaises(ValidationException) as context:
-            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], "", mock_database)
+            DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, [ 1 ], "", mock_database)
         self.assertEqual(str(context.exception), 'invalid-batch-tenant')
 
         LOGGER.info("Checking if no sub-methods have been called in any of the invalid runs")
@@ -157,9 +160,9 @@ class TestDeviceCreationHandler(unittest.TestCase):
         mock_database.session = AlchemyMagicMock()
 
         LOGGER.info("Checking if a valid batch-creation calls the expected funcions")
-        label = "a-preffix-10"
+        label = "a-prefix-10"
         templates = [ 1 ]
-        DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, templates, "tenant-id", mock_database)
+        DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, templates, "tenant-id", mock_database)
 
         LOGGER.info("Checking if the creation call has been made and the proper arguments were passed")
         mock_insert_new_device_into_database.assert_called_once()
@@ -170,3 +173,44 @@ class TestDeviceCreationHandler(unittest.TestCase):
         LOGGER.info("Checking if the event publish call has been made")
         mock_publish_device_creation
         mock_publish_device_creation.assert_called_once()
+
+
+    def mocked_insertion(device_data, database):
+        device_label = device_data['label']
+        LOGGER.info(f"Starting a mocked insertion for device labelled {device_label}")
+        if(device_label.endswith('11') or device_label.endswith('13')):
+            raise BusinessException('a-business-error')
+        else:
+            response = Mock(DatabaseDevice)
+            LOGGER.info(f"Returning {response}")
+            return response
+
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.insert_new_device_into_database', new=mocked_insertion)
+    @patch('DeviceManager.DeviceHandler.serialize_full_device')
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.publish_device_creation')
+    @patch('DeviceManager.DeviceHandler.db')
+    def test_return_for_create_devices_in_batch(self, mock_database, mock_publish_device_creation, mock_serialize_full_device):
+        mock_database.session = AlchemyMagicMock()
+
+        mock_publish_device_creation.return_value = ""
+        mock_serialize_full_device.return_value = { 'id': '123abc', 'label': 'a-prefix-11' }
+
+        LOGGER.info("Checking response for a single failure")
+        response = DeviceHandler.create_devices_in_batch("a-prefix", 1, 10, [ 1 ], "tenant-id", mock_database)
+        self.assertFalse(response['devicesWithError'])
+        self.assertEqual(len(response['successes']), 1)
+        self.assertEqual(len(response['failures']), 0)
+
+
+        LOGGER.info("Checking response for a single success")
+        response = DeviceHandler.create_devices_in_batch("a-prefix", 1, 11, [ 1 ], "tenant-id", mock_database)
+        self.assertTrue(response['devicesWithError'])
+        self.assertEqual(len(response['successes']), 0)
+        self.assertEqual(len(response['failures']), 1)
+
+
+        LOGGER.info("Checking response for mixed success and failure")
+        response = DeviceHandler.create_devices_in_batch("a-prefix", 5, 10, [ 1 ], "tenant-id", mock_database)
+        self.assertTrue(response['devicesWithError'])
+        self.assertEqual(len(response['successes']), 3)
+        self.assertEqual(len(response['failures']), 2)
