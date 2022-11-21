@@ -17,18 +17,16 @@ from .token_test_generator import generate_token
 
 from alchemy_mock.mocking import AlchemyMagicMock, UnifiedAlchemyMagicMock
 
-
 from DeviceManager.Logger import Log
 LOGGER = Log().color_log()
 
-class TestDeviceHandler(unittest.TestCase):
+class TestDeviceCreationHandler(unittest.TestCase):
 
     app = Flask(__name__)
 
     @patch('DeviceManager.DeviceHandler.db')
-    @patch('flask_sqlalchemy._QueryProperty.__get__')
-    def test_device_insertion_with_invalid_device_id(self, db_mock_session, query_property_getter_mock):
-        
+    def test_device_insertion_with_invalid_device_id(self, mock_database):
+
         device_data = {
             "id": "invalid",
             "label": "any-label",
@@ -41,10 +39,13 @@ class TestDeviceHandler(unittest.TestCase):
         self.assertEqual(str(context.exception), 'invalid-deviceId')
 
 
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id')
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists')
     @patch('DeviceManager.DeviceHandler.db')
-    @patch('flask_sqlalchemy._QueryProperty.__get__')
-    def test_device_insertion_with_no_device_id(self, db_mock_session, query_property_getter_mock):
-        db_mock_session.session = AlchemyMagicMock()
+    def test_device_insertion_with_no_device_id(self, mock_database, mock_label_check, mock_generate_device_id):
+        mock_database.session = AlchemyMagicMock()
+        mock_label_check.return_value = False
+        mock_generate_device_id.return_value = "abc123"
 
         device_data = {
             # no device-id
@@ -52,22 +53,15 @@ class TestDeviceHandler(unittest.TestCase):
             "templates": [ 1 ]
         }
 
-        with patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists') as mock_label_check:
-            mock_label_check.return_value = False
-
-            with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
-
-                mock_device_id.return_value = "abc123"
-
-                DeviceHandler.insert_new_device_into_database(device_data, db_mock_session)
-                mock_device_id.assert_called_once()
+        DeviceHandler.insert_new_device_into_database(device_data, mock_database)
+        mock_generate_device_id.assert_called_once()
 
 
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists')
     @patch('DeviceManager.DeviceHandler.db')
-    @patch('flask_sqlalchemy._QueryProperty.__get__')
-    def test_device_insertion_with_duplicated_label(self, db_mock_session, query_property_getter_mock):
-        db_mock_session.session = AlchemyMagicMock()
-        token = generate_token()
+    def test_device_insertion_with_duplicated_label(self, mock_database, mock_label_check):
+        mock_database.session = AlchemyMagicMock()
+        mock_label_check.return_value = True
 
         device_data = {
             "id": "123abc",
@@ -75,19 +69,17 @@ class TestDeviceHandler(unittest.TestCase):
             "templates": [ ]
         }
 
-        with patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists') as mock_label_check:
-            mock_label_check.return_value = True
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.insert_new_device_into_database(device_data, mock_database)
 
-            with self.assertRaises(Exception) as context:
-                DeviceHandler.insert_new_device_into_database(device_data, db_mock_session)
-
-            self.assertEqual(str(context.exception), 'label-already-in-use')
+        self.assertEqual(str(context.exception), 'label-already-in-use')
 
 
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists')
     @patch('DeviceManager.DeviceHandler.db')
-    @patch('flask_sqlalchemy._QueryProperty.__get__')
-    def test_device_insertion_with_no_template(self, db_mock_session, query_property_getter_mock):
-        db_mock_session.session = AlchemyMagicMock()
+    def test_device_insertion_with_no_template(self, mock_database, mock_label_check):
+        mock_database.session = AlchemyMagicMock()
+        mock_label_check.return_value = False
 
         device_data = {
             "id": "123abc",
@@ -95,132 +87,98 @@ class TestDeviceHandler(unittest.TestCase):
             "templates": [ ]
         }
 
-        with patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists') as mock_label_check:
-            mock_label_check.return_value = False
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.insert_new_device_into_database(device_data, mock_database)
 
-            with self.assertRaises(Exception) as context:
-                DeviceHandler.insert_new_device_into_database(device_data, db_mock_session)
+        self.assertEqual(str(context.exception), 'no-templates-assigned')
 
-            self.assertEqual(str(context.exception), 'no-templates-assigned')
+
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.publish_device_creation')
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.insert_new_device_into_database')
+    @patch('DeviceManager.DeviceHandler.db')
+    def test_signature_safeguards_for_create_devices_in_batch(self, mock_database, mock_insert_new_device_into_database, mock_publish_device_creation):
+        mock_database.session = AlchemyMagicMock()
+
+        LOGGER.info("Checking if invalid batch-preffix is correctly handled")
+
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch(None, 0, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch(1, 0, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("", 0, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-preffix')
+
+
+        LOGGER.info("Checking if invalid batch-quantity is correctly handled")
         
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", None, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-quantity')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 0, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-quantity')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", -1, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-quantity')
 
 
-
-    #     with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
-
-    #         data = {
-    #             "devicesPrefix": "batch-test",
-    #             "quantity": 10,
-    #             "initialSuffixNumber": 50,
-    #             "templates": [ 1 ]
-    #         }
-
+        LOGGER.info("Checking if invalid batch-suffix is correctly handled")
         
-    #     with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
-    #         mock_device_id.return_value = 'test_device_id'
-
-    #         with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
-    #             mock_validate_device_id.return_value = True
-
-    #             with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
-
-    #                 params = {'count': '1', 'verbose': 'false',
-    #                         'content_type': 'application/json', 'data': data}
-    #                 result = DeviceHandler.create_device(params, token)
-
-    #                 self.assertIsNotNone(result)
-    #                 self.assertTrue(result['devices'])
-    #                 self.assertEqual(result['message'], 'devices created')
-    #                 self.assertEqual(result['devices'][0]['id'], 'test_device_id')
-    #                 self.assertEqual(result['devices'][0]['label'], 'test_device')
-
-    #                 params = {'count': '1', 'verbose': 'true',
-    #                         'content_type': 'application/json', 'data': data}
-    #                 result = DeviceHandler.create_device(params, token)
-    #                 self.assertIsNotNone(result)
-    #                 self.assertTrue(result['devices'])
-    #                 self.assertEqual(result['message'], 'device created')
-
-    #                 # Here contains the validation when the count is not a number
-    #                 params = {'count': 'is_not_a_number', 'verbose': 'false',
-    #                         'content_type': 'application/json', 'data': data}
-
-    #                 with self.assertRaises(HTTPRequestError):
-    #                     result = DeviceHandler.create_device(params, token)
-
-    #                 # Here contains the HttpRequestError validating de count with verbose
-    #                 params = {'count': '2', 'verbose': 'true',
-    #                         'content_type': 'application/json', 'data': data}
-
-    #                 with self.assertRaises(HTTPRequestError):
-    #                     result = DeviceHandler.create_device(params, token)
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, None, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-suffix')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, "50", [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-suffix')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, -1, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-suffix')
 
 
-
-    # @patch('DeviceManager.DeviceHandler.db')
-    # @patch('flask_sqlalchemy._QueryProperty.__get__')
-    # def garbaggio(self, db_mock_session, query_property_getter_mock):
-    #     db_mock_session.session = AlchemyMagicMock()
-    #     token = generate_token()
-
-    #     device_data = {
-    #         "label": "any-label",
-    #         "templates": [ ]
-    #     }
-
-    #     with patch('DeviceManager.DeviceHandler.DeviceHandler.label_already_exists') as mock_label_check:
-    #         mock_label_check.return_value = True
-
-    #         with self.assertRaises(Exception) as exception:
-    #             DeviceHandler.insert_new_device_into_database(device_data, None)
-
-    #         self.assertEqual(str(exception), 'invalid-deviceId')
+        LOGGER.info("Checking if invalid template is correctly handled")
         
-    #     with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, None, "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-templates')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [], "tenant-id", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-templates')
 
-    #         data = {
-    #             "devicesPrefix": "batch-test",
-    #             "quantity": 10,
-    #             "initialSuffixNumber": 50,
-    #             "templates": [ 1 ]
-    #         }
 
+        LOGGER.info("Checking if invalid tenant is correctly handled")
         
-    #     with patch('DeviceManager.DeviceHandler.DeviceHandler.generate_device_id') as mock_device_id:
-    #         mock_device_id.return_value = 'test_device_id'
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], None, mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-tenant')
+        with self.assertRaises(Exception) as context:
+            DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, [ 1 ], "", mock_database)
+        self.assertEqual(str(context.exception), 'invalid-batch-tenant')
 
-    #         with patch('DeviceManager.DeviceHandler.DeviceHandler.validate_device_id') as mock_validate_device_id:
-    #             mock_validate_device_id.return_value = True
+        LOGGER.info("Checking if no sub-methods have been called in any of the invalid runs")
+        mock_insert_new_device_into_database.assert_not_called()
+        mock_publish_device_creation.assert_not_called()
 
-    #             with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
 
-    #                 params = {'count': '1', 'verbose': 'false',
-    #                         'content_type': 'application/json', 'data': data}
-    #                 result = DeviceHandler.create_device(params, token)
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.publish_device_creation')
+    @patch('DeviceManager.DeviceHandler.DeviceHandler.insert_new_device_into_database')
+    @patch('DeviceManager.DeviceHandler.db')
+    def test_method_calls_for_create_devices_in_batch(self, mock_database, mock_insert_new_device_into_database, mock_publish_device_creation):
+        mock_database.session = AlchemyMagicMock()
 
-    #                 self.assertIsNotNone(result)
-    #                 self.assertTrue(result['devices'])
-    #                 self.assertEqual(result['message'], 'devices created')
-    #                 self.assertEqual(result['devices'][0]['id'], 'test_device_id')
-    #                 self.assertEqual(result['devices'][0]['label'], 'test_device')
+        LOGGER.info("Checking if a valid batch-creation calls the expected funcions")
+        label = "a-preffix-10"
+        templates = [ 1 ]
+        DeviceHandler.create_devices_in_batch("a-preffix", 1, 10, templates, "tenant-id", mock_database)
 
-    #                 params = {'count': '1', 'verbose': 'true',
-    #                         'content_type': 'application/json', 'data': data}
-    #                 result = DeviceHandler.create_device(params, token)
-    #                 self.assertIsNotNone(result)
-    #                 self.assertTrue(result['devices'])
-    #                 self.assertEqual(result['message'], 'device created')
+        LOGGER.info("Checking if the creation call has been made and the proper arguments were passed")
+        mock_insert_new_device_into_database.assert_called_once()
+        mock_insert_new_device_into_database.assert_called_with({ 'label': label, 'templates': templates }, mock_database)
 
-    #                 # Here contains the validation when the count is not a number
-    #                 params = {'count': 'is_not_a_number', 'verbose': 'false',
-    #                         'content_type': 'application/json', 'data': data}
+        mock_database.session.commit.assert_called_once()
 
-    #                 with self.assertRaises(HTTPRequestError):
-    #                     result = DeviceHandler.create_device(params, token)
-
-    #                 # Here contains the HttpRequestError validating de count with verbose
-    #                 params = {'count': '2', 'verbose': 'true',
-    #                         'content_type': 'application/json', 'data': data}
-
-    #                 with self.assertRaises(HTTPRequestError):
-    #                     result = DeviceHandler.create_device(params, token)
+        LOGGER.info("Checking if the event publish call has been made")
+        mock_publish_device_creation
+        mock_publish_device_creation.assert_called_once()
