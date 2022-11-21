@@ -155,7 +155,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
 
     def test_template_attribute_duplication_when_loading(self):
 
-        mock_return_first_value = MagicMock();
+        mock_return_first_value = MagicMock()
         mock_return_first_value.count = lambda : 1
         mock_return_first_value.one = lambda : {
                                         "attrs": [
@@ -163,7 +163,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
                                         ]
                                     }
 
-        mock_return_second_value = MagicMock();
+        mock_return_second_value = MagicMock()
         mock_return_second_value.count = lambda : 1
         mock_return_second_value.one = lambda : {
                                         "attrs": [
@@ -171,7 +171,7 @@ class TestDeviceCreationHandler(unittest.TestCase):
                                         ]
                                     }
 
-        mock_return_third_value = MagicMock();
+        mock_return_third_value = MagicMock()
         mock_return_third_value.count = lambda : 0
         mock_return_third_value.one = lambda : {}
 
