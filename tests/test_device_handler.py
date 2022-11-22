@@ -322,15 +322,16 @@ class TestDeviceHandler(unittest.TestCase):
 
                 with patch.object(KafkaInstanceHandler, "getInstance", return_value=MagicMock()):
 
-                    params = {'count': '1', 'verbose': 'false',
+                    params = {'count': '1', 'verbose': 'true',
                             'content_type': 'application/json', 'data': data}
                     result = DeviceHandler.create_device(params, token)
 
                     self.assertIsNotNone(result)
                     self.assertTrue(result['devices'])
-                    self.assertEqual(result['message'], 'devices created')
+                    self.assertEqual(result['message'], 'device created')
                     self.assertEqual(result['devices'][0]['id'], 'test_device_id')
                     self.assertEqual(result['devices'][0]['label'], 'test_device')
+                    self.assertEqual(result['devices'][0]['disabled'], True)
 
     @patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_create_device_integrity_errors(self, query_get_mock):
