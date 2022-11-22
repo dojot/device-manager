@@ -152,6 +152,7 @@ def register_new_device(transaction):
     transaction['proprietary']['template_id'] = template_id
     device_json = json.loads(transaction['request']['body'])
     device_json['templates'] = [template_id]
+    device_json['disabled'] = False
     transaction['request']['body'] = json.dumps(device_json)
 
 
@@ -172,6 +173,7 @@ def create_single_device(transaction):
     transaction['proprietary']['template_id'] = template_id
     device = {
         "label": generate_unique_label("test_device"),
+        "disabled": False,
         "templates": [template_id]
     }
     req = {
@@ -206,6 +208,7 @@ def create_actuator_device(transaction):
     transaction['proprietary']['template_id'] = template_id
     device = {
         "label": generate_unique_label("test_device"),
+        "disabled": False,
         "templates": [template_id]
     }
     req = {
