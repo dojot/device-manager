@@ -105,7 +105,8 @@ class DeviceSchema(Schema):
     label = fields.Str(required=True)
     created = fields.DateTime(dump_only=True)
     updated = fields.DateTime(dump_only=True)
-    templates = fields.Nested(TemplateSchema, only=('id'), many=True)
+    templates = fields.Nested(TemplateSchema, only=('id'), many=True, required=True)
+    disabled = fields.Boolean(required=True)
 
     @post_load
     def set_import_id(self, data):
