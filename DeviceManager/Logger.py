@@ -16,7 +16,7 @@ class Log:
             'disable_existing_loggers': True,
         }
         
-        dateFormat = datetime.now(timezone.utc).astimezone().isoformat("T","milliseconds")
+        dateFormat = '%Y-%m-%dT%H:%M:%SZ'
         config_log.dictConfig(LOGGING)
         self.formatter = ColoredFormatter(LOG_FORMAT, dateFormat)
         self.log = logging.getLogger('device-manager.' + __name__)
