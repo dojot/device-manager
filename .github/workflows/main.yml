@@ -54,14 +54,6 @@ jobs:
         python3 -m pytest --cov-report=html --cov=DeviceManager tests/
         coverage run -m pytest tests && coverage xml
 
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        file: coverage.xml
-        flags: Device-manager
-        name: device-manager
-
   docker-hub:
     needs: python-tests
     name: Build and Publish image to DockerHub
