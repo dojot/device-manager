@@ -213,12 +213,17 @@ class TemplateHandler():
             LOGGER.debug(f" Created template in database")
         except IntegrityError as error:
             LOGGER.error(f' {error}')
+            db.session.flush()
+            db.session.rollback()
+            db.session.close()
             handle_consistency_exception(error)
 
         results = {
             'template': template_schema.dump(loaded_template),
             'result': 'ok'
         }
+
+        db.session.close()
         return results
 
     @staticmethod
@@ -261,6 +266,9 @@ class TemplateHandler():
 
             db.session.commit()
         except IntegrityError:
+            db.session.flush()
+            db.session.rollback()
+            db.session.close()
             raise HTTPRequestError(400, "Templates cannot be removed as they are being used by devices")
 
         results = {
@@ -268,6 +276,7 @@ class TemplateHandler():
             'removed': json_templates
         }
 
+        db.session.close()
         return results
 
     @staticmethod
@@ -294,6 +303,9 @@ class TemplateHandler():
             db.session.delete(tpl)
             db.session.commit()
         except IntegrityError:
+            db.session.flush()
+            db.session.rollback()
+            db.session.close()
             raise HTTPRequestError(400, "Templates cannot be removed as they are being used by devices")
 
         results = {
@@ -301,6 +313,7 @@ class TemplateHandler():
             'removed': json_template
         }
 
+        db.session.close()
         return results
 
     @classmethod
@@ -481,7 +494,7 @@ def flask_create_template():
         LOGGER.error(f" {e}")
         return make_response(jsonify(results), 400)
     except HTTPRequestError as error:
-        LOGGER.error(f" {error}")
+        LOGGER.error(f"{error.message}")
         if isinstance(error.message, dict):
             return make_response(jsonify(error.message), error.error_code)
         return format_response(error.error_code, error.message)
