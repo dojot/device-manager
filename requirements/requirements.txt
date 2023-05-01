@@ -7,7 +7,7 @@ chardet==3.0.4
 click==6.7
 colorlog==3.1.4
 coverage==5.3.1
-Flask==0.12.2
+Flask==2.3.2
 Flask-Alembic==2.0.1
 Flask-Migrate==2.1.1
 Flask-SQLAlchemy==2.3.2
